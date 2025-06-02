@@ -5,32 +5,31 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.request.path
 import io.ktor.server.request.receiveText
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
-import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import mu.KotlinLogging
 import no.nav.dagpenger.events.ingestion.EventIngestor
 import org.slf4j.event.Level
 
-private val callLogg = KotlinLogging.logger("CallLogging")
+private val callLogger = KotlinLogging.logger("CallLogging")
 
 fun Application.eventApi(ingestor: EventIngestor) {
     installStatusPages()
     install(CallLogging) {
         level = Level.INFO
-        logger = callLogg
+        logger = callLogger
         disableDefaultColors()
+        filter { call -> NaisEndpoints.contains(call.request.path()) }
     }
 
     routing {
-        route("/internal") {
-            get("/isalive") { call.respond(HttpStatusCode.OK, "OK") }
-            get("/isready") { call.respond(HttpStatusCode.OK, "OK") }
-        }
+        get(NaisEndpoints.isaliveEndpoint) { call.respond(HttpStatusCode.OK, "OK") }
+        get(NaisEndpoints.isreadyEndpoint) { call.respond(HttpStatusCode.OK, "OK") }
 
         post("/event") {
             val body = call.receiveText()
@@ -55,4 +54,14 @@ private fun Application.installStatusPages() {
             call.respond(httpStatusCode, problem)
         }
     }
+}
+
+object NaisEndpoints {
+    val isaliveEndpoint = "/internal/isalive"
+    val isreadyEndpoint = "/internal/isready"
+    val metricsEndpoint = "/internal/metrics"
+
+    private val endpoints = setOf(isaliveEndpoint, isreadyEndpoint, metricsEndpoint)
+
+    fun contains(path: String) = endpoints.any { path.startsWith(it) }
 }

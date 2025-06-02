@@ -1,5 +1,8 @@
 package no.nav.dagpenger.events.duckdb
 
+import com.google.cloud.storage.BlobId
+import com.google.cloud.storage.BlobInfo
+import com.google.cloud.storage.StorageOptions
 import mu.KotlinLogging
 import java.sql.Connection
 import java.sql.DriverManager
@@ -7,7 +10,6 @@ import java.sql.Timestamp
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 class DuckDbStore(
     private val conn: Connection,
@@ -30,6 +32,8 @@ class DuckDbStore(
         periodicTrigger.register { flushToParquetAndClear(gcsBucketPrefix) }.start()
     }
 
+    private val storage = StorageOptions.getDefaultInstance().service
+
     fun insertEvent(
         ts: Instant,
         eventName: String,
@@ -46,9 +50,9 @@ class DuckDbStore(
     }
 
     private fun flushToParquetAndClear(bucketPathPrefix: String) {
-        val timestamp = DateTimeFormatter.ISO_INSTANT.format(Instant.now()).replace(":", "-")
         val path = hivePath(LocalDateTime.now())
         val gcsPath = "$bucketPathPrefix/$path.parquet"
+        ensurePath(gcsPath)
 
         logger.info { "Flushing events to $gcsPath" }
 
@@ -70,10 +74,14 @@ class DuckDbStore(
         }
     }
 
-    private val zoneOffset = ZoneOffset.UTC
+    private fun ensurePath(path: String) {
+        val blobId = BlobId.fromGsUtilUri(path)
+        val blobInfo = BlobInfo.newBuilder(blobId).build()
+        storage.create(blobInfo, ByteArray(0))
+    }
 
     private fun hivePath(now: LocalDateTime = LocalDateTime.now()): String =
-        "year=${now.year}/month=${now.month.value}/day=${now.dayOfMonth}/${now.toEpochSecond(zoneOffset)}"
+        "year=${now.year}/month=${now.month.value}/day=${now.dayOfMonth}/${now.toEpochSecond(ZoneOffset.UTC)}"
 
     companion object {
         private val logger = KotlinLogging.logger { }
