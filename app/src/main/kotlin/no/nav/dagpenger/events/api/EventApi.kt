@@ -10,6 +10,7 @@ import io.ktor.server.request.uri
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import mu.KotlinLogging
 import no.nav.dagpenger.events.ingestion.EventIngestor
@@ -26,7 +27,7 @@ fun Application.eventApi(ingestor: EventIngestor) {
     }
 
     routing {
-        get("/internal") {
+        route("/internal") {
             get("/isalive") { call.respond(HttpStatusCode.OK, "OK") }
             get("/isready") { call.respond(HttpStatusCode.OK, "OK") }
         }
