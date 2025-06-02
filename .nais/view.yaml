@@ -12,7 +12,7 @@ metadata:
 spec:
   resourceID: dp-events-tabell
   datasetRef:
-    name: dataprodukt
+    external: dataprodukt
   description: "BigQuery tabell som leser Parquet filer fra GCS"
   externalDataConfiguration:
     sourceFormat: PARQUET
