@@ -24,6 +24,8 @@ spec:
     requests:
       cpu: 10m
       memory: 256Mi
+  ingresses:
+    - https://dp-events.intern.dev.nav.no/
   env:
     - name: GCS_BATCH_SIZE
       value: "5000"
