@@ -2,13 +2,12 @@ package no.nav.dagpenger.events.duckdb
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
@@ -22,24 +21,16 @@ class PeriodicTrigger(
     private val counter = AtomicInteger(0)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val mutex = Mutex()
+    private var flushJob: Job? = null
 
     fun start() {
-        scope.launch {
-            while (isActive) {
-                delay(interval)
-                if (counter.get() >= 1) {
-                    flushSafely()
-                }
-            }
-        }
+        scheduleIntervalFlush()
     }
 
     fun stop() {
-        // Kjør action en siste gang før stopp
+        flushJob?.cancel()
         scope.launch {
-            if (counter.get() >= 1) {
-                flushSafely()
-            }
+            flushSafely()
         }
         scope.cancel()
     }
@@ -47,24 +38,31 @@ class PeriodicTrigger(
     fun increment(by: Int = 1) {
         val newValue = counter.addAndGet(by)
         if (newValue >= batchSize) {
-            // Kjører action med en gang
             scope.launch {
                 flushSafely()
             }
-            // Nullstill telleren
-            counter.set(0)
         }
     }
 
-    private suspend fun flushSafely() {
-        withTimeout(60.seconds) {
-            mutex.withLock {
-                try {
-                    action()
-                } finally {
-                    counter.set(0)
-                }
+    private fun scheduleIntervalFlush() {
+        flushJob?.cancel() // Cancel any previous timer
+        flushJob =
+            scope.launch {
+                delay(interval)
+                flushSafely()
             }
+    }
+
+    private suspend fun flushSafely() {
+        if (!mutex.tryLock()) return // Avoid overlapping flushes
+        try {
+            withTimeout(60.seconds) {
+                action()
+                counter.set(0)
+            }
+        } finally {
+            mutex.unlock()
+            scheduleIntervalFlush() // Reschedule after successful flush
         }
     }
 

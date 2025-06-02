@@ -23,6 +23,7 @@ abstract class EventIngestor {
             } catch (e: Exception) {
                 throw IllegalArgumentException("Malformed JSON: ${e.message}")
             }
+
         storeEvent(eventName, json)
     }
 }
