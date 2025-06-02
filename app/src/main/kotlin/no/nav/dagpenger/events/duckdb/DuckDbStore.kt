@@ -68,7 +68,7 @@ class DuckDbStore(
             val gcsFile = "$bucketPathPrefix/$partition.parquet"
             val localFile = Files.createTempFile("events-", ".parquet")
 
-            logger.info { "Flushing events to $localFile" }
+            logger.info { "Making copy of events-table to flush" }
 
             conn.autoCommit = false
             try {
@@ -82,12 +82,17 @@ class DuckDbStore(
                 throw e
             }
 
+            logger.info { "Exporting events to $localFile" }
+
             conn.createStatement().use { stmt ->
                 stmt.executeUpdate("COPY to_export TO '$localFile' (FORMAT 'parquet')")
                 stmt.executeUpdate("DROP TABLE to_export")
             }
 
+            logger.info { "Copying Parquet-file to $gcsFile" }
             copyToBucket(gcsFile, localFile)
+
+            logger.info { "Flush finished" }
         }
 
     private fun copyToBucket(
