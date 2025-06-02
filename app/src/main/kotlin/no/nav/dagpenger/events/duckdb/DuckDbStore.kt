@@ -4,6 +4,8 @@ import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import java.nio.file.Files
 import java.nio.file.Path
@@ -47,43 +49,46 @@ class DuckDbStore(
         eventName: String,
         payload: String,
     ) {
-        conn.prepareStatement("INSERT INTO events (ts, event_name, payload, collected_by) VALUES (?, ?, ?, ?)").use { stmt ->
-            stmt.setTimestamp(1, Timestamp.from(ts))
-            stmt.setString(2, eventName)
-            stmt.setString(3, payload)
-            stmt.setString(4, appName)
-            stmt.executeUpdate()
-        }
+        conn
+            .prepareStatement("INSERT INTO events (ts, event_name, payload, collected_by) VALUES (?, ?, ?, ?)")
+            .use { stmt ->
+                stmt.setTimestamp(1, Timestamp.from(ts))
+                stmt.setString(2, eventName)
+                stmt.setString(3, payload)
+                stmt.setString(4, appName)
+                stmt.executeUpdate()
+            }
 
         periodicTrigger.increment()
     }
 
-    private fun flushToParquetAndClear(bucketPathPrefix: String) {
-        val partition = hivePath(LocalDateTime.now())
-        val gcsFile = "$bucketPathPrefix/$partition.parquet"
-        val localFile = Files.createTempFile("events-", ".parquet")
+    private suspend fun flushToParquetAndClear(bucketPathPrefix: String) =
+        withContext(Dispatchers.IO) {
+            val partition = hivePath(LocalDateTime.now())
+            val gcsFile = "$bucketPathPrefix/$partition.parquet"
+            val localFile = Files.createTempFile("events-", ".parquet")
 
-        logger.info { "Flushing events to $localFile" }
+            logger.info { "Flushing events to $localFile" }
 
-        conn.autoCommit = false
-        try {
-            conn.createStatement().use { stmt ->
-                stmt.executeUpdate("CREATE TABLE to_export AS SELECT * FROM events")
-                stmt.executeUpdate("DELETE FROM events")
+            conn.autoCommit = false
+            try {
+                conn.createStatement().use { stmt ->
+                    stmt.executeUpdate("CREATE TABLE to_export AS SELECT * FROM events")
+                    stmt.executeUpdate("DELETE FROM events")
+                }
+                conn.commit()
+            } catch (e: Exception) {
+                conn.rollback()
+                throw e
             }
-            conn.commit()
-        } catch (e: Exception) {
-            conn.rollback()
-            throw e
-        }
 
-        conn.createStatement().use { stmt ->
-            stmt.executeUpdate("COPY to_export TO '$localFile' (FORMAT 'parquet')")
-            stmt.executeUpdate("DROP TABLE to_export")
-        }
+            conn.createStatement().use { stmt ->
+                stmt.executeUpdate("COPY to_export TO '$localFile' (FORMAT 'parquet')")
+                stmt.executeUpdate("DROP TABLE to_export")
+            }
 
-        copyToBucket(gcsFile, localFile)
-    }
+            copyToBucket(gcsFile, localFile)
+        }
 
     private fun copyToBucket(
         gcsPath: String,

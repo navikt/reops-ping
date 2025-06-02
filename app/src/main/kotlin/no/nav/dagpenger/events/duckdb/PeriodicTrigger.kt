@@ -18,7 +18,7 @@ class PeriodicTrigger(
     private val batchSize: Int,
     private val interval: Duration,
 ) {
-    private var action: () -> Unit = {}
+    private var action: suspend () -> Unit = {}
     private val counter = AtomicInteger(0)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val mutex = Mutex()
@@ -68,7 +68,7 @@ class PeriodicTrigger(
         }
     }
 
-    fun register(block: () -> Unit): PeriodicTrigger {
+    fun register(block: suspend () -> Unit): PeriodicTrigger {
         this.action = block
         return this
     }
