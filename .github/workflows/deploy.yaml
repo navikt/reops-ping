@@ -80,5 +80,5 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/nais.yaml,.nais/view.yaml
           VARS: .nais/vars-dev.yaml
-          VAR: image=${{ needs.build.outputs.image }}
+          VAR: image=${{ needs.build.outputs.image }},project=teamdagpenger-dev-885f
           PRINT_PAYLOAD: true
