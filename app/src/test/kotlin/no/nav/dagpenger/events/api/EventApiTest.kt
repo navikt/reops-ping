@@ -25,7 +25,7 @@ class EventApiTest {
             val eventJson = """{"event_name": "bar", "payload": {"some-data": "/"}}"""
             val response =
                 client.post("/event") {
-                    contentType(ContentType.Application.ProblemJson)
+                    contentType(ContentType.Application.Json)
                     setBody(eventJson)
                 }
 
@@ -36,13 +36,38 @@ class EventApiTest {
         }
     }
 
-    private class EventIngestorFake : EventIngestor() {
+    @Test
+    fun `skal håndtere feil ved skriving av event via HTTP`() {
+        testApplication {
+            val ingestor = EventIngestorFake(true)
+            application {
+                eventApi(ingestor)
+            }
+
+            @Language("JSON")
+            val eventJson = """{"event_name": "bar", "payload": {"some-data": "/"}}"""
+            val response =
+                client.post("/event") {
+                    contentType(ContentType.Application.Json)
+                    setBody(eventJson)
+                }
+
+            response.status shouldBe HttpStatusCode.InternalServerError
+        }
+    }
+
+    private class EventIngestorFake(
+        val flushing: Boolean = false,
+    ) : EventIngestor() {
         val receivedEvents = mutableListOf<String>()
 
         override fun storeEvent(
             eventName: String,
             json: String,
         ) {
+            if (flushing) {
+                throw IllegalStateException("Flushing does not allow writes")
+            }
             receivedEvents.add(json)
         }
     }

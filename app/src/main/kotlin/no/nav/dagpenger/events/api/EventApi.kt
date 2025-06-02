@@ -1,14 +1,19 @@
 package no.nav.dagpenger.events.api
 
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.calllogging.CallLoggingConfig
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.plugins.statuspages.StatusPagesConfig
 import io.ktor.server.request.path
 import io.ktor.server.request.receiveText
 import io.ktor.server.request.uri
+import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -21,7 +26,12 @@ import org.slf4j.event.Level
 private val callLogger = KotlinLogging.logger("CallLogging")
 
 fun Application.eventApi(ingestor: EventIngestor) {
-    installStatusPages()
+    install(StatusPages) {
+        statusPages()
+    }
+    install(ContentNegotiation) {
+        json()
+    }
     install(CallLogging) {
         level = Level.INFO
         logger = callLogger
@@ -41,20 +51,20 @@ fun Application.eventApi(ingestor: EventIngestor) {
     }
 }
 
-private fun Application.installStatusPages() {
-    install(StatusPages) {
-        exception<Throwable> { call, cause ->
-            val httpStatusCode = HttpStatusCode.InternalServerError
-            val problem =
-                Problem(
-                    type = "internal-server-error.html",
-                    status = httpStatusCode.value,
-                    title = httpStatusCode.description,
-                    detail = cause.message,
-                    instance = call.request.uri,
-                )
-            call.respond(httpStatusCode, problem)
-        }
+private fun StatusPagesConfig.statusPages() {
+    exception<Throwable> { call, cause ->
+        callLogger.error(cause) { "Unhandled exception for ${call.request.path()}" }
+        call.response.header("Content-Type", ContentType.Application.ProblemJson.toString())
+        val httpStatusCode = HttpStatusCode.InternalServerError
+        val problem =
+            Problem(
+                type = "internal-server-error.html",
+                status = httpStatusCode.value,
+                title = httpStatusCode.description,
+                detail = cause.message,
+                instance = call.request.uri,
+            )
+        call.respond(httpStatusCode, problem)
     }
 }
 
