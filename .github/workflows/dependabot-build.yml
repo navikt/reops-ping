@@ -17,7 +17,4 @@ jobs:
           java-version: 21
 
       - uses: gradle/actions/setup-gradle@v4
-        env:
-          ORG_GRADLE_PROJECT_githubUser: x-access-token
-          ORG_GRADLE_PROJECT_githubPassword: ${{ secrets.GITHUB_TOKEN }}
-      - run: ./gradlew --configuration-cache test
+      - run: ./gradlew test
