@@ -27,7 +27,7 @@ class DuckDbStore(
                 CREATE TABLE IF NOT EXISTS events (
                     ts TIMESTAMP,
                     event_name TEXT,
-                    payload JSON
+                    payload TEXT 
                 )
                 """.trimIndent(),
             )

@@ -31,5 +31,6 @@ spec:
     buckets:
       - name: "{{ bucket.name }}"
         retentionPeriodDays: 3
+        publicAccessPrevention: true
         lifecycleCondition:
           age: 7 # days
