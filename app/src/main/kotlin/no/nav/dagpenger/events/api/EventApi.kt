@@ -4,6 +4,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.plugins.calllogging.CallLogging
+import io.ktor.server.plugins.calllogging.CallLoggingConfig
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.path
 import io.ktor.server.request.receiveText
@@ -13,6 +14,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import mu.KotlinLogging
+import no.nav.dagpenger.events.api.NaisEndpoints.ignore
 import no.nav.dagpenger.events.ingestion.EventIngestor
 import org.slf4j.event.Level
 
@@ -24,7 +26,7 @@ fun Application.eventApi(ingestor: EventIngestor) {
         level = Level.INFO
         logger = callLogger
         disableDefaultColors()
-        filter { call -> NaisEndpoints.contains(call.request.path()) }
+        ignore(NaisEndpoints)
     }
 
     routing {
@@ -64,4 +66,8 @@ object NaisEndpoints {
     private val endpoints = setOf(isaliveEndpoint, isreadyEndpoint, metricsEndpoint)
 
     fun contains(path: String) = endpoints.any { path.startsWith(it) }
+
+    fun CallLoggingConfig.ignore(endpoints: NaisEndpoints) {
+        filter { call -> !endpoints.contains(call.request.path()) }
+    }
 }
