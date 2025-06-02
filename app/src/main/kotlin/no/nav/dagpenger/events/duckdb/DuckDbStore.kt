@@ -52,8 +52,8 @@ class DuckDbStore(
     }
 
     private fun flushToParquetAndClear(bucketPathPrefix: String) {
-        val path = hivePath(LocalDateTime.now())
-        val gcsFile = "$bucketPathPrefix/${path.first}/${path.second}.parquet"
+        val partition = hivePath(LocalDateTime.now())
+        val gcsFile = "$bucketPathPrefix/$partition.parquet"
         val localFile = Files.createTempFile("events-", ".parquet")
 
         logger.info { "Flushing events to $localFile" }
@@ -87,8 +87,8 @@ class DuckDbStore(
         storage.createFrom(blobInfo, localFile)
     }
 
-    private fun hivePath(now: LocalDateTime = LocalDateTime.now()): Pair<String, String> =
-        Pair("year=${now.year}/month=${now.month.value}/day=${now.dayOfMonth}/", "${now.toEpochSecond(ZoneOffset.UTC)}")
+    private fun hivePath(now: LocalDateTime = LocalDateTime.now()) =
+        "year=${now.year}/month=${now.month.value}/day=${now.dayOfMonth}/${now.toEpochSecond(ZoneOffset.UTC)}"
 
     companion object {
         private val logger = KotlinLogging.logger { }
