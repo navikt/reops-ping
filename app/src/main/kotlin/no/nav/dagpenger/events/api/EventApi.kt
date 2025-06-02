@@ -8,6 +8,7 @@ import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.receiveText
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
+import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import mu.KotlinLogging
@@ -25,6 +26,12 @@ fun Application.eventApi(ingestor: EventIngestor) {
     }
 
     routing {
+        get("/internal/isalive") {
+            call.respond(HttpStatusCode.OK, "OK")
+        }
+        get("/internal/isready") {
+            call.respond(HttpStatusCode.OK, "OK")
+        }
         post("/event") {
             val body = call.receiveText()
             ingestor.handleEvent(body)

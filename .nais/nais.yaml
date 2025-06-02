@@ -16,7 +16,7 @@ spec:
     min: 2
     max: 2
   prometheus:
-    enabled: true
+    enabled: false
     path: "/internal/metrics"
   resources:
     limits:
