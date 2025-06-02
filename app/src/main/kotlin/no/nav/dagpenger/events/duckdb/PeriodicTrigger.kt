@@ -49,6 +49,7 @@ class PeriodicTrigger(
         flushJob =
             scope.launch {
                 delay(interval)
+                if (counter.get() == 0) return@launch // No need to flush if counter is zero
                 flushSafely()
             }
     }
