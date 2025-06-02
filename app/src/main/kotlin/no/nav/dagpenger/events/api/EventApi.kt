@@ -26,12 +26,11 @@ fun Application.eventApi(ingestor: EventIngestor) {
     }
 
     routing {
-        get("/internal/isalive") {
-            call.respond(HttpStatusCode.OK, "OK")
+        get("/internal") {
+            get("/isalive") { call.respond(HttpStatusCode.OK, "OK") }
+            get("/isready") { call.respond(HttpStatusCode.OK, "OK") }
         }
-        get("/internal/isready") {
-            call.respond(HttpStatusCode.OK, "OK")
-        }
+
         post("/event") {
             val body = call.receiveText()
             ingestor.handleEvent(body)
