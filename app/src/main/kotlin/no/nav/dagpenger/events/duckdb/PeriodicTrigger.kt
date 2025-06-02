@@ -7,8 +7,12 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 class PeriodicTrigger(
     private val batchSize: Int,
@@ -17,13 +21,14 @@ class PeriodicTrigger(
     private var action: () -> Unit = {}
     private val counter = AtomicInteger(0)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private val mutex = Mutex()
 
     fun start() {
         scope.launch {
             while (isActive) {
                 delay(interval)
                 if (counter.get() >= 1) {
-                    action()
+                    flushSafely()
                 }
             }
         }
@@ -33,7 +38,7 @@ class PeriodicTrigger(
         // Kjør action en siste gang før stopp
         scope.launch {
             if (counter.get() >= 1) {
-                action()
+                flushSafely()
             }
         }
         scope.cancel()
@@ -44,10 +49,22 @@ class PeriodicTrigger(
         if (newValue >= batchSize) {
             // Kjører action med en gang
             scope.launch {
-                action()
+                flushSafely()
             }
             // Nullstill telleren
             counter.set(0)
+        }
+    }
+
+    private suspend fun flushSafely() {
+        withTimeout(60.seconds) {
+            mutex.withLock {
+                try {
+                    action()
+                } finally {
+                    counter.set(0)
+                }
+            }
         }
     }
 
