@@ -1,0 +1,35 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: "dp-events"
+  namespace: "teamdagpenger"
+  labels:
+    "team": "teamdagpenger"
+spec:
+  image: "{{image}}"
+  port: 8080
+  liveness:
+    path: "internal/isalive"
+  readiness:
+    path: "internal/isready"
+  replicas:
+    min: 2
+    max: 2
+  prometheus:
+    enabled: true
+    path: "/internal/metrics"
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      cpu: 10m
+      memory: 256Mi
+  env:
+    - name: GCS_BUCKET_PREFIX
+      value: "gs://{{ bucket.name }}/events"
+  gcp:
+    buckets:
+      - name: "{{ bucket.name }}"
+        retentionPeriodDays: 3
+        lifecycleCondition:
+          age: 7 # days
