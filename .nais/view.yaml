@@ -2,9 +2,9 @@ apiVersion: bigquery.cnrm.cloud.google.com/v1beta1
 kind: BigQueryTable
 metadata:
   name: dp-events-tabell
-  namespace: teamdagpenger
+  namespace: team-researchops
   labels:
-    team: teamdagpenger
+    team: team-researchops
   annotations:
     cnrm.cloud.google.com/management-conflict-prevention-policy: none
     cnrm.cloud.google.com/project-id: {{project}}

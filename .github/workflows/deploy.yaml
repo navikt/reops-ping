@@ -42,7 +42,7 @@ jobs:
         uses: nais/docker-build-push@v0
         id: docker-build-push
         with:
-          team: teamdagpenger
+          team: team-researchops
           tag: ${{ github.sha }}
           dockerfile: app/Dockerfile
           docker_context: app
@@ -58,12 +58,12 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: navikt/dagpenger/actions/attest-sign@master
+      - uses: navikt/team-researchops/actions/attest-sign@master
         with:
           digest: ${{ needs.build.outputs.digest }}
           identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
           project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-          team: teamdagpenger
+          team: team-researchops
 
   deploy-dev:
     name: Deploy to dev
@@ -80,5 +80,5 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/nais.yaml,.nais/view.yaml
           VARS: .nais/vars-dev.yaml
-          VAR: image=${{ needs.build.outputs.image }},project=teamdagpenger-dev-885f
+          VAR: image=${{ needs.build.outputs.image }},project=team-researchops-prod-01d6
           PRINT_PAYLOAD: true
