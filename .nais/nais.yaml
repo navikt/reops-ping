@@ -25,6 +25,10 @@ spec:
       cpu: 10m
       memory: 256Mi
   env:
+    - name: GCS_BATCH_SIZE
+      value: "5000"
+    - name: GCS_MAX_INTERVAL_SECONDS
+      value: "10"
     - name: GCS_BUCKET_PREFIX
       value: "gs://{{ bucket.name }}/events"
   gcp:

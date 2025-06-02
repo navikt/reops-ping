@@ -12,12 +12,14 @@ import kotlin.time.Duration.Companion.seconds
 private val logger = KotlinLogging.logger {}
 
 fun main() {
+    val batchSize = System.getenv("GCS_BATCH_SIZE")?.toIntOrNull() ?: 1000
+    val maxInterval = System.getenv("GCS_MAX_INTERVAL_SECONDS")?.toIntOrNull() ?: 10
     val gcsBucketPrefix =
         System.getenv("GCS_BUCKET_PREFIX")
             ?: throw IllegalArgumentException("Environment variable GCS_BUCKET_PREFIX is not set")
 
     val trigger =
-        PeriodicTrigger(batchSize = 1000, interval = 10.seconds).apply {
+        PeriodicTrigger(batchSize, maxInterval.seconds).apply {
             Runtime.getRuntime().addShutdownHook(
                 Thread {
                     logger.info("Shutdown hook triggered. Cleaning up...")
