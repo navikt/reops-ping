@@ -7,4 +7,4 @@ spec:
   role: roles/storage.objectViewer
   resourceRef:
     kind: StorageBucket
-    name: dp-events-bucket
+    name: reops-events-bucket
