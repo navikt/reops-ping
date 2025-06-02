@@ -32,7 +32,9 @@ class PeriodicTrigger(
     fun stop() {
         // Kjør action en siste gang før stopp
         scope.launch {
-            action()
+            if (counter.get() >= 1) {
+                action()
+            }
         }
         scope.cancel()
     }

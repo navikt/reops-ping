@@ -2,8 +2,11 @@ package no.nav.dagpenger.events.duckdb
 
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
+import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
 import mu.KotlinLogging
+import java.nio.file.Files
+import java.nio.file.Path
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.Timestamp
@@ -15,6 +18,7 @@ class DuckDbStore(
     private val conn: Connection,
     private val periodicTrigger: PeriodicTrigger,
     gcsBucketPrefix: String,
+    private val storage: Storage = StorageOptions.getDefaultInstance().service,
 ) {
     init {
         conn.createStatement().use {
@@ -31,8 +35,6 @@ class DuckDbStore(
 
         periodicTrigger.register { flushToParquetAndClear(gcsBucketPrefix) }.start()
     }
-
-    private val storage = StorageOptions.getDefaultInstance().service
 
     fun insertEvent(
         ts: Instant,
@@ -51,11 +53,10 @@ class DuckDbStore(
 
     private fun flushToParquetAndClear(bucketPathPrefix: String) {
         val path = hivePath(LocalDateTime.now())
-        val gcsPath = "$bucketPathPrefix/${path.first}"
-        ensurePath(gcsPath)
-        val gcsFile = "$gcsPath/${path.second}.parquet"
+        val gcsFile = "$bucketPathPrefix/${path.first}/${path.second}.parquet"
+        val localFile = Files.createTempFile("events-", ".parquet")
 
-        logger.info { "Flushing events to $gcsFile" }
+        logger.info { "Flushing events to $localFile" }
 
         conn.autoCommit = false
         try {
@@ -70,15 +71,20 @@ class DuckDbStore(
         }
 
         conn.createStatement().use { stmt ->
-            stmt.executeUpdate("COPY to_export TO '$gcsFile' (FORMAT 'parquet')")
+            stmt.executeUpdate("COPY to_export TO '$localFile' (FORMAT 'parquet')")
             stmt.executeUpdate("DROP TABLE to_export")
         }
+
+        copyToBucket(gcsFile, localFile)
     }
 
-    private fun ensurePath(path: String) {
-        val blobId = BlobId.fromGsUtilUri(path)
+    private fun copyToBucket(
+        gcsPath: String,
+        localFile: Path,
+    ) {
+        val blobId = BlobId.fromGsUtilUri(gcsPath)
         val blobInfo = BlobInfo.newBuilder(blobId).build()
-        storage.create(blobInfo, ByteArray(0))
+        storage.createFrom(blobInfo, localFile)
     }
 
     private fun hivePath(now: LocalDateTime = LocalDateTime.now()): Pair<String, String> =
