@@ -51,10 +51,11 @@ class DuckDbStore(
 
     private fun flushToParquetAndClear(bucketPathPrefix: String) {
         val path = hivePath(LocalDateTime.now())
-        val gcsPath = "$bucketPathPrefix/$path.parquet"
+        val gcsPath = "$bucketPathPrefix/${path.first}"
         ensurePath(gcsPath)
+        val gcsFile = "$gcsPath/${path.second}.parquet"
 
-        logger.info { "Flushing events to $gcsPath" }
+        logger.info { "Flushing events to $gcsFile" }
 
         conn.autoCommit = false
         try {
@@ -69,7 +70,7 @@ class DuckDbStore(
         }
 
         conn.createStatement().use { stmt ->
-            stmt.executeUpdate("COPY to_export TO '$gcsPath' (FORMAT 'parquet')")
+            stmt.executeUpdate("COPY to_export TO '$gcsFile' (FORMAT 'parquet')")
             stmt.executeUpdate("DROP TABLE to_export")
         }
     }
@@ -80,8 +81,8 @@ class DuckDbStore(
         storage.create(blobInfo, ByteArray(0))
     }
 
-    private fun hivePath(now: LocalDateTime = LocalDateTime.now()): String =
-        "year=${now.year}/month=${now.month.value}/day=${now.dayOfMonth}/${now.toEpochSecond(ZoneOffset.UTC)}"
+    private fun hivePath(now: LocalDateTime = LocalDateTime.now()): Pair<String, String> =
+        Pair("year=${now.year}/month=${now.month.value}/day=${now.dayOfMonth}/", "${now.toEpochSecond(ZoneOffset.UTC)}")
 
     companion object {
         private val logger = KotlinLogging.logger { }
