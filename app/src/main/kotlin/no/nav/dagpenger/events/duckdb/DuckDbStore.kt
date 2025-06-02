@@ -14,7 +14,7 @@ import java.sql.DriverManager
 import java.sql.Timestamp
 import java.time.Instant
 import java.time.LocalDateTime
-import java.time.ZoneOffset
+import java.util.UUID
 
 class DuckDbStore(
     private val conn: Connection,
@@ -100,7 +100,7 @@ class DuckDbStore(
     }
 
     private fun hivePath(now: LocalDateTime = LocalDateTime.now()) =
-        "year=${now.year}/month=${now.month.value}/day=${now.dayOfMonth}/${now.toEpochSecond(ZoneOffset.UTC)}"
+        "year=${now.year}/month=${now.month.value}/day=${now.dayOfMonth}/${UUID.randomUUID()}"
 
     companion object {
         private val logger = KotlinLogging.logger { }
