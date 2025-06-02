@@ -22,12 +22,14 @@ class DuckDbStore(
 ) {
     init {
         conn.createStatement().use {
+            //language=GenericSQL
             it.executeUpdate(
                 """
                 CREATE TABLE IF NOT EXISTS events (
                     ts TIMESTAMP,
                     event_name TEXT,
-                    payload TEXT 
+                    payload TEXT,
+                    collected_by TEXT, 
                 )
                 """.trimIndent(),
             )
@@ -36,15 +38,20 @@ class DuckDbStore(
         periodicTrigger.register { flushToParquetAndClear(gcsBucketPrefix) }.start()
     }
 
+    private val appName by lazy {
+        System.getenv("NAIS_APP_NAME") ?: "unknown-app"
+    }
+
     fun insertEvent(
         ts: Instant,
         eventName: String,
         payload: String,
     ) {
-        conn.prepareStatement("INSERT INTO events (ts, event_name, payload) VALUES (?, ?, ?)").use { stmt ->
+        conn.prepareStatement("INSERT INTO events (ts, event_name, payload, collected_by) VALUES (?, ?, ?, ?)").use { stmt ->
             stmt.setTimestamp(1, Timestamp.from(ts))
             stmt.setString(2, eventName)
             stmt.setString(3, payload)
+            stmt.setString(4, appName)
             stmt.executeUpdate()
         }
 
