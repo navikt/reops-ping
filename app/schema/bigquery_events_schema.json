@@ -1,0 +1,26 @@
+[
+  {
+    "name": "ts",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "Timestamp when the event was recorded"
+  },
+  {
+    "name": "event_name",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Name of the event"
+  },
+  {
+    "name": "payload",
+    "type": "JSON",
+    "mode": "REQUIRED",
+    "description": "JSON payload of the event"
+  },
+  {
+    "name": "collected_by",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "Application that collected the event"
+  }
+]

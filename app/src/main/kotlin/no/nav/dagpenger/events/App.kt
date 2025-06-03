@@ -44,18 +44,20 @@ fun main() {
 
     embeddedServer(CIO, port = 8080) {
         logger.info { "Configuring event API endpoints" }
-        eventApi(object : DuckDbEventIngestor(store) {
-            override fun ingest(eventName: String, payload: String) {
-                logger.info { "Event received - name: $eventName, payload: $payload" }
-                try {
-                    super.ingest(eventName, payload)
-                    logger.info { "Event successfully ingested - name: $eventName" }
-                } catch (e: Exception) {
-                    logger.error(e) { "Error ingesting event - name: $eventName" }
-                    throw e
+        eventApi(
+            object : DuckDbEventIngestor(store) {
+                override fun ingest(eventName: String, payload: String) {
+                    logger.info { "Event received - name: $eventName, payload: $payload" }
+                    try {
+                        super.ingest(eventName, payload)
+                        logger.info { "Event successfully ingested - name: $eventName" }
+                    } catch (e: Exception) {
+                        logger.error(e) { "Error ingesting event - name: $eventName" }
+                        throw e
+                    }
                 }
             }
-        })
+        )
     }.apply {
         logger.info { "Starting server on port 8080" }
         start(wait = true)

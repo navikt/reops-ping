@@ -34,7 +34,7 @@ class DuckDbStore(
                         ts TIMESTAMP,
                         event_name TEXT,
                         payload TEXT,
-                        collected_by TEXT, 
+                        collected_by TEXT
                     )
                     """.trimIndent(),
                 )

@@ -1,0 +1,4 @@
+ts:TIMESTAMP:REQUIRED:Timestamp when the event was recorded
+event_name:STRING:REQUIRED:Name of the event
+payload:STRING:REQUIRED:JSON payload of the event
+collected_by:STRING:REQUIRED:Application that collected the event
