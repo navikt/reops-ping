@@ -2,6 +2,8 @@ name: Build and deploy
 
 on:
   push:
+    branches:
+      - main
     branches-ignore:
       - 'dependabot/**'
     paths-ignore:
@@ -46,24 +48,9 @@ jobs:
           tag: ${{ github.sha }}
           dockerfile: app/Dockerfile
           docker_context: app
-          salsa: false
     outputs:
       image: ${{ steps.docker-build-push.outputs.image }}
       digest: ${{ steps.docker-build-push.outputs.digest }}
-
-  salsa:
-    name: Generate SBOM, attest and sign image
-    needs: [ build ]
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-    steps:
-      - uses: navikt/team-researchops/actions/attest-sign@master
-        with:
-          digest: ${{ needs.build.outputs.digest }}
-          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
-          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
-          team: team-researchops
 
   deploy-dev:
     name: Deploy to dev
