@@ -5,195 +5,205 @@ import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
+import no.nav.dagpenger.events.ingestion.Event
 import java.nio.file.Files
 import java.nio.file.Path
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.Timestamp
-import java.time.Instant
 import java.time.LocalDateTime
 import java.util.UUID
 
-class DuckDbStore(
+fun interface DuckDbObserver {
+    fun onInsert()
+}
+
+class DuckDbStore internal constructor(
     private val conn: Connection,
-    private val periodicTrigger: PeriodicTrigger,
-    gcsBucketPrefix: String,
-    private val storage: Storage = StorageOptions.getDefaultInstance().service
+    private val gcsBucketEvent: String,
+    private val gcsBucketAttribute: String,
+    private val storage: Storage,
 ) {
+    constructor(
+        gcsBucketPrefixEvent: String,
+        gcsBucketPrefixAttribute: String,
+    ) : this(
+        DriverManager.getConnection("jdbc:duckdb:"),
+        gcsBucketPrefixEvent,
+        gcsBucketPrefixAttribute,
+        StorageOptions.getDefaultInstance().service,
+    )
+
+    private val observers = mutableListOf<DuckDbObserver>()
+    private val mutex = Mutex()
+
     init {
-        logger.info { "Initializing DuckDbStore with gcsBucketPrefix: $gcsBucketPrefix" }
-        try {
-            conn.createStatement().use {
-                logger.debug { "Creating events table if it doesn't exist" }
-                // language=GenericSQL
-                it.executeUpdate(
-                    """
-                    CREATE TABLE IF NOT EXISTS events (
-                        ts TIMESTAMP,
-                        event_name TEXT,
-                        payload TEXT,
-                        collected_by TEXT
-                    )
-                    """.trimIndent()
-                )
-                logger.debug { "Events table created or already exists" }
-            }
-
-            logger.info { "Registering periodic trigger for flushing events" }
-            periodicTrigger.register { flushToParquetAndClear(gcsBucketPrefix) }.start()
-            logger.info { "DuckDbStore initialization complete" }
-        } catch (e: Exception) {
-            logger.error(e) { "Failed to initialize DuckDbStore" }
-            throw e
+        conn.createStatement().use {
+            //language=PostgreSQL
+            it.executeUpdate(
+                """
+                CREATE TABLE IF NOT EXISTS event
+                (
+                    uuid       uuid PRIMARY KEY,
+                    created_at TIMESTAMP,
+                    event_name TEXT,
+                    payload    TEXT
+                );
+                
+                CREATE TABLE IF NOT EXISTS event_attribute
+                (
+                    uuid         uuid,
+                    event_name TEXT,
+                    key          TEXT,
+                    type         TEXT,
+                    value_string TEXT,
+                    value_bool   BOOLEAN,
+                    value_number DOUBLE,
+                    created_at   TIMESTAMP
+                );
+                """.trimIndent(),
+            )
         }
     }
 
-    private val appName by lazy {
-        System.getenv("NAIS_APP_NAME") ?: "unknown-app"
+    fun addObserver(observer: DuckDbObserver) {
+        observers.add(observer)
     }
 
-    fun insertEvent(
-        ts: Instant,
-        eventName: String,
-        payload: String
-    ) {
-        logger.debug { "Inserting event: name=$eventName, timestamp=$ts" }
-        try {
-            conn.prepareStatement("INSERT INTO events (ts, event_name, payload, collected_by) VALUES (?, ?, ?, ?)")
-                .use { stmt ->
-                    stmt.setTimestamp(1, Timestamp.from(ts))
-                    stmt.setString(2, eventName)
-                    stmt.setString(3, payload)
-                    stmt.setString(4, appName)
-                    val rowsAffected = stmt.executeUpdate()
-                    logger.debug { "Successfully inserted event: $eventName, rows affected: $rowsAffected" }
+    suspend fun insertEvent(event: Event) {
+        mutex.withLock {
+            conn.autoCommit = false
+            try {
+                conn
+                    .prepareStatement("INSERT INTO event (uuid, created_at, event_name, payload) VALUES (?, ?, ?, ?)")
+                    .use { stmt ->
+                        stmt.setObject(1, event.uuid)
+                        stmt.setTimestamp(2, Timestamp.from(event.createdAt))
+                        stmt.setString(3, event.eventName)
+                        stmt.setString(4, event.json)
+                        stmt.executeUpdate()
+                    }
+
+                event.attributes.forEach { (key, value) ->
+                    conn
+                        .prepareStatement(
+                            """
+                            INSERT INTO event_attribute (uuid, event_name, key, type, value_string, value_bool, value_number, created_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                            """.trimIndent(),
+                        ).use { stmt ->
+                            stmt.setObject(1, event.uuid)
+                            stmt.setString(2, event.eventName)
+                            stmt.setString(3, key)
+                            when (value) {
+                                is String -> {
+                                    stmt.setString(4, "string")
+                                    stmt.setString(5, value)
+                                    stmt.setNull(6, java.sql.Types.BOOLEAN)
+                                    stmt.setNull(7, java.sql.Types.DOUBLE)
+                                }
+
+                                is Boolean -> {
+                                    stmt.setString(4, "boolean")
+                                    stmt.setNull(5, java.sql.Types.VARCHAR)
+                                    stmt.setBoolean(6, value)
+                                    stmt.setNull(7, java.sql.Types.DOUBLE)
+                                }
+
+                                is Long -> {
+                                    stmt.setString(4, "double")
+                                    stmt.setNull(5, java.sql.Types.VARCHAR)
+                                    stmt.setNull(6, java.sql.Types.BOOLEAN)
+                                    stmt.setDouble(7, value.toDouble())
+                                }
+
+                                is Double -> {
+                                    stmt.setString(4, "double")
+                                    stmt.setNull(5, java.sql.Types.VARCHAR)
+                                    stmt.setNull(6, java.sql.Types.BOOLEAN)
+                                    stmt.setDouble(7, value)
+                                }
+
+                                else -> {
+                                    throw IllegalArgumentException("Unsupported attribute type: ${value::class.java}")
+                                }
+                            }
+                            stmt.setTimestamp(8, Timestamp.from(event.createdAt))
+                            stmt.executeUpdate()
+                        }
                 }
+                conn.commit()
 
-            logger.debug { "Incrementing event counter in trigger" }
-            periodicTrigger.increment()
-            logger.debug { "Event successfully processed and counter incremented" }
-        } catch (e: Exception) {
-            logger.error(e) { "Failed to insert event: $eventName with payload: $payload" }
-            throw e
+                observers.emit { onInsert() }
+            } catch (e: Exception) {
+                conn.rollback()
+                throw e
+            }
         }
     }
 
-    private suspend fun flushToParquetAndClear(bucketPathPrefix: String) = withContext(Dispatchers.IO) {
-        logger.info { "Starting flush process to export events to Parquet" }
-        val partition = hivePath(LocalDateTime.now())
-        val gcsFile = "$bucketPathPrefix/$partition.parquet"
-        val localFile = Files.createTempFile("events-", ".parquet")
-        logger.debug { "Created temp file: $localFile" }
+    suspend fun flushToParquetAndClear() =
+        withContext(Dispatchers.IO) {
+            mutex.withLock {
+                flushTable("event", gcsBucketEvent)
+                flushTable("event_attribute", gcsBucketAttribute)
 
-        logger.info { "Making copy of events-table to flush, creating to_export table" }
+                logger.info { "Flush finished" }
+            }
+        }
+
+    private fun flushTable(
+        table: String,
+        gcsBucketPrefix: String,
+    ) {
+        val gcsFile = "$gcsBucketPrefix/${partitionPath()}.parquet"
+        val localFile = Files.createTempFile("events-", ".parquet")
+        val exportTable = "export_$table"
+
+        logger.info { "Making copy of table=$table to flush" }
 
         conn.autoCommit = false
         try {
             conn.createStatement().use { stmt ->
-                logger.debug { "Creating to_export table from events" }
-                val rowsCopied = conn.prepareStatement("SELECT COUNT(*) FROM events").use {
-                    it.executeQuery().use { rs ->
-                        if (rs.next()) rs.getInt(1) else 0
-                    }
-                }
-                logger.info { "Preparing to export $rowsCopied events" }
-                
-                stmt.executeUpdate("CREATE TABLE to_export AS SELECT * FROM events")
-                logger.debug { "Deleting records from events table" }
-                stmt.executeUpdate("DELETE FROM events")
+                stmt.executeUpdate("CREATE TABLE $exportTable AS SELECT * FROM $table")
+                stmt.executeUpdate("DELETE FROM $table")
             }
             conn.commit()
-            logger.debug { "Transaction committed" }
         } catch (e: Exception) {
-            logger.error(e) { "Error during table copy, rolling back transaction" }
             conn.rollback()
             throw e
         }
 
-        logger.info { "Exporting events to Parquet file: $localFile" }
+        logger.info { "Exporting $table to $localFile" }
 
-        try {
-            conn.createStatement().use { stmt ->
-                stmt.executeUpdate("COPY to_export TO '$localFile' (FORMAT 'parquet')")
-                logger.debug { "Successfully wrote data to Parquet file" }
-                stmt.executeUpdate("DROP TABLE to_export")
-                logger.debug { "Dropped temporary to_export table" }
-            }
-
-            logger.info { "Copying Parquet-file to GCS: $gcsFile" }
-            copyToBucket(gcsFile, localFile)
-
-            // Get file size for logging
-            val fileSize = Files.size(localFile) / 1024 // KB
-            logger.info { "Flush finished successfully. File size: $fileSize KB" }
-            
-            try {
-                logger.debug { "Deleting temporary file: $localFile" }
-                Files.deleteIfExists(localFile)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to delete temporary file: $localFile" }
-            }
-        } catch (e: Exception) {
-            logger.error(e) { "Failed to export data to Parquet or upload to GCS" }
-            throw e
+        conn.createStatement().use { stmt ->
+            stmt.executeUpdate("COPY $exportTable TO '$localFile' (FORMAT 'parquet')")
+            stmt.executeUpdate("DROP TABLE $exportTable")
         }
+
+        logger.info { "Copying Parquet-file to $gcsFile" }
+        copyToBucket(localFile, gcsFile)
     }
 
     private fun copyToBucket(
+        localFile: Path,
         gcsPath: String,
-        localFile: Path
     ) {
-        logger.debug { "Starting upload to GCS: $gcsPath" }
-        try {
-            val blobId = BlobId.fromGsUtilUri(gcsPath)
-            logger.debug { "Created BlobId: $blobId" }
-            
-            val blobInfo = BlobInfo.newBuilder(blobId).build()
-            logger.debug { "Created BlobInfo: $blobInfo" }
-            
-            val startTime = System.currentTimeMillis()
-            storage.createFrom(blobInfo, localFile)
-            val duration = System.currentTimeMillis() - startTime
-            
-            logger.info { "Upload to GCS completed successfully. Path: $gcsPath, Duration: $duration ms" }
-        } catch (e: Exception) {
-            logger.error(e) { "Failed to upload file to GCS. Path: $gcsPath, Local file: $localFile" }
-            throw e
-        }
+        val blobId = BlobId.fromGsUtilUri(gcsPath)
+        val blobInfo = BlobInfo.newBuilder(blobId).build()
+        storage.createFrom(blobInfo, localFile)
     }
 
-    private fun hivePath(now: LocalDateTime = LocalDateTime.now()): String {
-        val path = "year=${now.year}/month=${now.month.value}/day=${now.dayOfMonth}/${UUID.randomUUID()}"
-        logger.debug { "Generated Hive path: $path" }
-        return path
-    }
+    private fun partitionPath(now: LocalDateTime = LocalDateTime.now()) =
+        "year=${now.year}/month=${now.month.value}/day=${now.dayOfMonth}/${UUID.randomUUID()}"
 
     companion object {
         private val logger = KotlinLogging.logger { }
 
-        fun createInMemoryStore(
-            gcsBucketPrefix: String,
-            trigger: PeriodicTrigger
-        ): DuckDbStore {
-            logger.info { "Creating in-memory DuckDB store with bucket prefix: $gcsBucketPrefix" }
-            try {
-                logger.debug { "Opening DuckDB connection" }
-                val connection = DriverManager.getConnection("jdbc:duckdb:")
-                logger.debug { "Connection established successfully" }
-                
-                return DuckDbStore(
-                    connection,
-                    trigger,
-                    gcsBucketPrefix
-                ).also {
-                    logger.info { "In-memory DuckDbStore created successfully" }
-                }
-            } catch (e: Exception) {
-                logger.error(e) { "Failed to create in-memory DuckDbStore" }
-                throw e
-            }
-        }
+        private fun Iterable<DuckDbObserver>.emit(block: DuckDbObserver.() -> Unit) = forEach { observer -> observer.block() }
     }
 }

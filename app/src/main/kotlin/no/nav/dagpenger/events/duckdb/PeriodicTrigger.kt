@@ -7,41 +7,64 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
+
+fun interface TriggerAction {
+    suspend fun invoke()
+}
 
 class PeriodicTrigger(
     private val batchSize: Int,
     private val interval: Duration,
-) {
-    private var action: suspend () -> Unit = {}
+    private val action: TriggerAction,
+) : DuckDbObserver {
     private val counter = AtomicInteger(0)
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private val mutex = Mutex()
     private var flushJob: Job? = null
 
-    fun start() {
+    internal fun start() {
+        logger.info { "Starter å regelmessig flushe events som er færre en batch-størrelse" }
         scheduleIntervalFlush()
     }
 
-    fun stop() {
+    internal fun stop() {
+        logger.info { "Avslutter regelmessig flushing" }
         flushJob?.cancel()
-        scope.launch {
-            flushSafely()
+        if (counter.get() > 0) {
+            runBlocking {
+                flushSafely()
+            }
         }
         scope.cancel()
     }
 
-    fun increment(by: Int = 1) {
-        val newValue = counter.addAndGet(by)
+    private fun increment() {
+        val newValue = counter.addAndGet(1)
         if (newValue >= batchSize) {
-            scope.launch {
-                flushSafely()
+            // Atomically claim all current events for flushing
+            val eventsToFlush = counter.getAndSet(0)
+            if (eventsToFlush > 0) {
+                logger.info { "Flusher data etter batch har nådd $eventsToFlush events" }
+                scope.launch {
+                    flushSafely()
+                }
             }
         }
+    }
+
+    override fun onInsert() = increment()
+
+    fun registerShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                logger.info("Shutdown hook triggered. Cleaning up...")
+                stop()
+                logger.info("Cleanup complete.")
+            },
+        )
     }
 
     private fun scheduleIntervalFlush() {
@@ -50,25 +73,24 @@ class PeriodicTrigger(
             scope.launch {
                 delay(interval)
                 if (counter.get() == 0) return@launch // No need to flush if counter is zero
+                logger.info { "Flusher data etter interval=$interval med ${counter.get()} events" }
                 flushSafely()
+                counter.set(0)
             }
     }
 
     private suspend fun flushSafely() {
-        if (!mutex.tryLock()) return // Avoid overlapping flushes
         try {
-            withTimeout(60.seconds) {
-                action()
-                counter.set(0)
-            }
+            action.invoke()
+        } catch (e: Exception) {
+            logger.error(e) { "Feilet å flushe data: ${e.message}" }
+            throw e
         } finally {
-            mutex.unlock()
             scheduleIntervalFlush() // Reschedule after successful flush
         }
     }
 
-    fun register(block: suspend () -> Unit): PeriodicTrigger {
-        this.action = block
-        return this
+    private companion object {
+        private val logger = KotlinLogging.logger {}
     }
 }
