@@ -31,7 +31,7 @@ spec:
       value: "5000"
     - name: GCS_MAX_INTERVAL_SECONDS
       value: "10"
-    - name: GCS_BUCKET_PREFIX_EVENTAdd commentMore actions
+    - name: GCS_BUCKET_PREFIX_EVENT
       value: "gs://{{ bucket.name }}/event"
     - name: GCS_BUCKET_PREFIX_ATTRIBUTE
       value: "gs://{{ bucket.name }}/attribute"
