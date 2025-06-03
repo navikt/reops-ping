@@ -80,5 +80,5 @@ jobs:
           CLUSTER: dev-gcp
           RESOURCE: .nais/nais.yaml,.nais/view.yaml
           VARS: .nais/vars-dev.yaml
-          VAR: image=${{ needs.build.outputs.image }},project=team-researchops-prod-01d6
+          VAR: image=${{ needs.build.outputs.image }},project=team-researchops-dev-4396
           PRINT_PAYLOAD: true
