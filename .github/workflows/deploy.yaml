@@ -7,6 +7,9 @@ on:
     paths-ignore:
       - 'docs/**'
 
+env:
+  dataset: events
+
 jobs:
   build:
     name: Build and publish Docker image
@@ -50,6 +53,44 @@ jobs:
       image: ${{ steps.docker-build-push.outputs.image }}
       digest: ${{ steps.docker-build-push.outputs.digest }}
 
+  deploy-dataset:
+    name: Deploy BigQuery dataset
+    needs: [ build ]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: dev-gcp
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/cnrm/dataset.yaml #,.nais/cnrm/permission.yaml
+          VAR: project=team-researchops-dev-4396,dataset=${{ env.dataset }}
+          PRINT_PAYLOAD: true
+
+  deploy-views:
+    name: Deploy BigQuery views
+    needs: [ deploy-dataset ]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: dev-gcp
+    permissions:
+      id-token: write
+    strategy:
+      matrix:
+        table: [ events, events-attributes ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/views/parquet-table.yaml
+          VAR: project=team-researchops-dev-4396,dataset=${{ env.dataset }},table=${{ matrix.table }}
+          VARS: .nais/vars-dev.yaml
+          PRINT_PAYLOAD: true
+
   deploy-dev:
     name: Deploy to dev
     needs: [ build ]
@@ -63,7 +104,7 @@ jobs:
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
-          RESOURCE: .nais/nais.yaml,.nais/view-event.yaml,.nais/view-event-attribute.yaml
+          RESOURCE: .nais/nais.yaml
           VARS: .nais/vars-dev.yaml
-          VAR: image=${{ needs.build.outputs.image }},project=team-researchops-dev-4396
+          VAR: image=${{ needs.build.outputs.image }}
           PRINT_PAYLOAD: true
