@@ -67,17 +67,21 @@ class PeriodicTrigger(
         )
     }
 
-    private fun scheduleIntervalFlush() {
-        flushJob?.cancel() // Cancel any previous timer
-        flushJob =
-            scope.launch {
-                delay(interval)
-                if (counter.get() == 0) return@launch // No need to flush if counter is zero
+private fun scheduleIntervalFlush() {
+    flushJob?.cancel() // Cancel any previous timer
+    flushJob =
+        scope.launch {
+            delay(interval)
+            if (counter.get() > 0) {
                 logger.info { "Flusher data etter interval=$interval med ${counter.get()} events" }
                 flushSafely()
                 counter.set(0)
+            } else {
+                // Even if no events to flush, we still need to reschedule
+                scheduleIntervalFlush()
             }
-    }
+        }
+}
 
     private suspend fun flushSafely() {
         try {
