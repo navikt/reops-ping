@@ -28,7 +28,7 @@ spec:
     - https://reops-events.intern.dev.nav.no/
   env:
     - name: GCS_BATCH_SIZE
-      value: "20"
+      value: "5000"
     - name: GCS_MAX_INTERVAL_SECONDS
       value: "10"
     - name: GCS_BUCKET_PREFIX_EVENT
