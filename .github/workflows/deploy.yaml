@@ -83,11 +83,15 @@ jobs:
         table: [ events, events-attributes ]
     steps:
       - uses: actions/checkout@v4
+      - run: |
+          echo "SCHEMA<<EOF" >> "$GITHUB_ENV"
+          cat .nais/views/${{matrix.table}}.schema.yaml >> $GITHUB_ENV
+          echo "EOF" >> "$GITHUB_ENV"
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/views/parquet-table.yaml
-          VAR: project=team-researchops-dev-4396,dataset=${{ env.dataset }},table=${{ matrix.table }}
+          VAR: project=team-researchops-dev-4396,dataset=${{ env.dataset }},table=${{ matrix.table }},schema=${{ env.SCHEMA }}
           VARS: .nais/vars-dev.yaml
           PRINT_PAYLOAD: true
 

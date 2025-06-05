@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 fun interface TriggerAction {
     suspend fun invoke()
@@ -69,25 +70,35 @@ class PeriodicTrigger(
 
     private fun scheduleIntervalFlush() {
         flushJob?.cancel() // Cancel any previous timer
-        flushJob = scope.launch {  // Keep the opening brace on the same line
-            while (true) {
-                delay(interval)
-                if (counter.get() > 0) {
-                    logger.info { "Flusher data etter interval=$interval med ${counter.get()} events" }
-                    val eventsToFlush = counter.getAndSet(0)
-                    try {
-                        action.invoke()
-                    } catch (e: Exception) {
-                        logger.error(e) { "Feilet å flushe data: ${e.message}" }
-                        // Don't throw here, or the loop will end
-                    }
+        flushJob =
+            scope.launch {
+                delay(interval.withJitter((500.milliseconds)))
+                logger.info { "Sjekker etter $interval om det skal flushes. Har ${counter.get()} events." }
+                if (counter.get() == 0) {
+                    // No need to flush if counter is zero
+                    scheduleIntervalFlush()
+                    return@launch
                 }
-                // No else branch needed - we just continue the loop
+                flushSafely()
+                counter.set(0)
             }
+    }
+
+    private suspend fun flushSafely() {
+        try {
+            action.invoke()
+        } catch (e: Exception) {
+            logger.error(e) { "Feilet å flushe data: ${e.message}" }
+            throw e
+        } finally {
+            scheduleIntervalFlush() // Reschedule after successful flush
         }
     }
 
     private companion object {
         private val logger = KotlinLogging.logger {}
     }
+
+    private fun Duration.withJitter(tolerance: Duration) =
+        this + (-tolerance.inWholeMilliseconds..tolerance.inWholeMilliseconds).random().milliseconds
 }
