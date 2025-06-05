@@ -69,7 +69,8 @@ class PeriodicTrigger(
 
     private fun scheduleIntervalFlush() {
         flushJob?.cancel() // Cancel any previous timer
-        flushJob = scope.launch {
+        flushJob = scope.launch 
+        {
             while (true) {
                 delay(interval)
                 if (counter.get() > 0) {
