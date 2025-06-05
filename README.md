@@ -1,6 +1,6 @@
 # Reops ping test
 
-Ping test med kotlin på NAIS.
+Ping test med Kotlin på NAIS.
 
 # Henvendelser og veiledning
 
