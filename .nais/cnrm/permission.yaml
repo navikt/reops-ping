@@ -6,10 +6,10 @@ metadata:
     team: team-researchops
   annotations:
     cnrm.cloud.google.com/management-conflict-prevention-policy: none
-    cnrm.cloud.google.com/project-id: "{{project}}"
+    cnrm.cloud.google.com/project-id: "team-researchops-dev-4396"
     cnrm.cloud.google.com/state-into-spec: absent
 spec:
-  member: "serviceAccount:nais-sa-cnrm@{{project}}.iam.gserviceaccount.com"
+  member: "serviceAccount:nais-sa-cnrm@team-researchops-dev-4396.iam.gserviceaccount.com"
   role: roles/storage.objectViewer
   resourceRef:
     kind: StorageBucket
