@@ -66,7 +66,7 @@ jobs:
       - uses: nais/deploy/actions/deploy@v2
         env:
           CLUSTER: dev-gcp
-          RESOURCE: .nais/cnrm/dataset.yaml,.nais/cnrm/permission.yaml
+          RESOURCE: .nais/cnrm/dataset.yaml #,.nais/cnrm/permission.yaml
           VAR: project=team-researchops-dev-4396,dataset=${{ env.dataset }}
           PRINT_PAYLOAD: true
 
