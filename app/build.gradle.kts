@@ -6,6 +6,7 @@ plugins {
 
 dependencies {
     implementation(libs.bundles.ktor.server)
+    implementation("io.ktor:ktor-server-cors:$ktor_version") // Add this line
     implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.kotlin.logging)
