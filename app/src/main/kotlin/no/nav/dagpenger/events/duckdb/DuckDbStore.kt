@@ -82,7 +82,9 @@ class DuckDbStore internal constructor(
             conn.autoCommit = false
             try {
                 conn
-                    .prepareStatement("INSERT INTO event (uuid, created_at, team, app, environment, event_name, payload) VALUES (?, ?, ?, ?, ?, ?, ?)")
+                    .prepareStatement(
+                        "INSERT INTO event (uuid, created_at, team, app, environment, event_name, payload) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    )
                     .use { stmt ->
                         stmt.setString(1, event.uuid.toString())
                         stmt.setTimestamp(2, Timestamp.from(event.createdAt))
@@ -97,8 +99,18 @@ class DuckDbStore internal constructor(
                 event.attributes.forEach { (key, value) ->
                     conn
                         .prepareStatement(
+                            //language=PostgreSQL
                             """
-                            INSERT INTO event_attribute (uuid, event_name, key, type, value_string, value_bool, value_number, created_at)
+                            INSERT INTO event_attribute (
+                                uuid, 
+                                event_name, 
+                                key, 
+                                type, 
+                                value_string, 
+                                value_bool, 
+                                value_number, 
+                                created_at
+                            )
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                             """.trimIndent(),
                         ).use { stmt ->
