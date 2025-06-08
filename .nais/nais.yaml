@@ -26,6 +26,7 @@ spec:
       memory: 256Mi
   ingresses:
     - https://reops-events.intern.dev.nav.no/
+    - https://reops-events.ekstern.dev.nav.no/event
   env:
     - name: GCS_BATCH_SIZE
       value: "5000"
