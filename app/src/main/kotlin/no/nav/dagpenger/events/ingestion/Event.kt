@@ -21,6 +21,9 @@ data class Event(
     val eventName: String,
     val attributes: Map<String, Any>,
     val json: String,
+    val team: String,
+    val app: String,
+    val environment: String,
 ) {
     val uuid: UUID = UuidCreator.getTimeOrderedEpoch()
     val createdAt: Instant = Instant.now()
@@ -33,9 +36,19 @@ data class Event(
                 val eventName = parsed["event_name"]?.jsonPrimitive?.contentOrNull
                 if (eventName.isNullOrBlank()) throw IllegalArgumentException("Missing 'event_name'")
 
+                val team =
+                    parsed["team"]?.jsonPrimitive?.contentOrNull
+                        ?: throw IllegalArgumentException("Missing 'team'")
+                val app =
+                    parsed["app"]?.jsonPrimitive?.contentOrNull
+                        ?: throw IllegalArgumentException("Missing 'app'")
+                val environment =
+                    parsed["environment"]?.jsonPrimitive?.contentOrNull
+                        ?: throw IllegalArgumentException("Missing 'environment'")
+
                 val attributes = parsed["payload"]?.let { flatJsonToMap(it) } ?: emptyMap()
 
-                Event(eventName, attributes, json)
+                Event(eventName, attributes, json, team, app, environment)
             } catch (e: Exception) {
                 throw IllegalArgumentException("Malformed JSON: ${e.message}")
             }
