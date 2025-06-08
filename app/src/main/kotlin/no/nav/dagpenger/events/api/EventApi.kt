@@ -1,7 +1,6 @@
 package no.nav.dagpenger.events.api
 
 import io.ktor.http.ContentType
-import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
@@ -9,7 +8,6 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.calllogging.CallLoggingConfig
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.plugins.statuspages.StatusPagesConfig
 import io.ktor.server.request.path
@@ -39,13 +37,7 @@ fun Application.eventApi(ingestor: EventIngestor) {
         logger = callLogger
         disableDefaultColors()
         ignore(NaisEndpoints)
-    }
-    install(CORS) {
-        allowMethod(HttpMethod.Options) // Allows preflight requests
-        allowMethod(HttpMethod.Post)    // Allows POST requests
-        allowHeader("Content-Type")     // Allows Content-Type header (used in your JS)
-        allowHeader("Authorization")    // Allows Authorization header (if you plan to use it)
-        anyHost()                       // Allows requests from any origin. This is often a temporary measure for development and should be restricted in production.
+        filter { call -> call.request.path().startsWith("/event") }
     }
 
     routing {
