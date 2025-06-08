@@ -15,9 +15,7 @@
     const team = getAttribute("data-ping-team");
     const app = getAttribute("data-ping-app");
     const environment = getAttribute("data-ping-environment");
-    
-    // Hardcoded host URL
-    const hostUrl = "https://ping.ekstern.dev.nav.no/event";
+    const hostUrl = getAttribute("data-ping-endpoint");
     
     const includeQuery = getAttribute("data-ping-include-url-query") !== "false";
     const respectDoNotTrack = getAttribute("data-ping-respect-do-not-track") === "true";
@@ -27,8 +25,8 @@
         return;
     }
 
-    if (!team || !app || !environment) {
-        console.error("Tracking script requires 'data-ping-team', 'data-ping-app', and 'data-ping-environment'.");
+    if (!team || !app || !environment || !hostUrl) {
+        console.error("Tracking script requires 'data-ping-team', 'data-ping-app', 'data-ping-environment', and 'data-ping-endpoint'.");
         return;
     }
 
@@ -65,8 +63,8 @@
     };
 
     // Example: Auto-track page views - disabled by default, enabled only if explicitly set to "true"
-    const autoTrack = getAttribute("data-ping-auto-track") === "true";
-    if (autoTrack) {
+    const autoTrackPageViews = getAttribute("data-ping-track-pageviews") === "true";
+    if (autoTrackPageViews) {
         sendEvent("pageview");
     }
 
