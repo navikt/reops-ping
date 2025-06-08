@@ -8,6 +8,8 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.calllogging.CallLoggingConfig
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.cors.routing.CORS
+import io.ktor.http.HttpMethod
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.plugins.statuspages.StatusPagesConfig
 import io.ktor.server.request.path
@@ -31,6 +33,13 @@ fun Application.eventApi(ingestor: EventIngestor) {
     }
     install(ContentNegotiation) {
         json()
+    }
+    install(CORS) {
+        allowMethod(HttpMethod.Options)
+        allowMethod(HttpMethod.Post)
+        allowHeader("Content-Type")
+        allowHeader("Authorization")
+        anyHost() // Consider restricting this in production
     }
     install(CallLogging) {
         level = Level.INFO
