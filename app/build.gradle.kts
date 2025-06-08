@@ -17,6 +17,8 @@ dependencies {
     implementation(libs.google.cloud.storage)
     implementation(libs.duckdb)
 
+    implementation("io.ktor:ktor-server-cors:$ktorVersion")
+
     // Test dependencies
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.mockk)
