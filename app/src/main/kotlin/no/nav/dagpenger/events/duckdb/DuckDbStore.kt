@@ -48,10 +48,13 @@ class DuckDbStore internal constructor(
                 """
                 CREATE TABLE IF NOT EXISTS event
                 (
-                    uuid       TEXT PRIMARY KEY,
-                    created_at TIMESTAMP,
-                    event_name TEXT,
-                    payload    TEXT
+                    uuid        TEXT PRIMARY KEY,
+                    created_at  TIMESTAMP,
+                    team        TEXT,
+                    app         TEXT,
+                    environment TEXT,
+                    event_name  TEXT,
+                    payload     TEXT
                 );
                 
                 CREATE TABLE IF NOT EXISTS event_attribute
@@ -79,12 +82,15 @@ class DuckDbStore internal constructor(
             conn.autoCommit = false
             try {
                 conn
-                    .prepareStatement("INSERT INTO event (uuid, created_at, event_name, payload) VALUES (?, ?, ?, ?)")
+                    .prepareStatement("INSERT INTO event (uuid, created_at, team, app, environment, event_name, payload) VALUES (?, ?, ?, ?, ?, ?, ?)")
                     .use { stmt ->
                         stmt.setString(1, event.uuid.toString())
                         stmt.setTimestamp(2, Timestamp.from(event.createdAt))
-                        stmt.setString(3, event.eventName)
-                        stmt.setString(4, event.json)
+                        stmt.setString(3, event.team)
+                        stmt.setString(4, event.app)
+                        stmt.setString(5, event.environment)
+                        stmt.setString(6, event.eventName)
+                        stmt.setString(7, event.json)
                         stmt.executeUpdate()
                     }
 

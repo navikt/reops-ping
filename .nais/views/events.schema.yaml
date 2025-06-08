@@ -3,6 +3,12 @@
   mode: REQUIRED
 - name: created_at
   type: TIMESTAMP
+- name: team
+  type: STRING
+- name: app
+  type: STRING
+- name: environment
+  type: STRING
 - name: event_name
   type: STRING
 - name: payload
