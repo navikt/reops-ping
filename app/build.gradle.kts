@@ -16,7 +16,6 @@ dependencies {
 
     implementation(libs.google.cloud.storage)
     implementation(libs.duckdb)
-
     implementation(libs.ktor.server.cors)
 
     // Test dependencies

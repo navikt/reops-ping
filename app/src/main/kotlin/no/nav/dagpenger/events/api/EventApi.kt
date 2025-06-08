@@ -34,19 +34,18 @@ fun Application.eventApi(ingestor: EventIngestor) {
     install(ContentNegotiation) {
         json()
     }
-    install(CORS) {
-        allowMethod(HttpMethod.Options)
-        allowMethod(HttpMethod.Post)
-        allowHeader("Content-Type")
-        allowHeader("Authorization")
-        anyHost()
-    }
     install(CallLogging) {
         level = Level.INFO
         logger = callLogger
         disableDefaultColors()
         ignore(NaisEndpoints)
-        filter { call -> call.request.path().startsWith("/event") }
+    }
+    install(CORS) {
+        allowMethod(HttpMethod.Options) // Allows preflight requests
+        allowMethod(HttpMethod.Post)    // Allows POST requests
+        allowHeader("Content-Type")     // Allows Content-Type header (used in your JS)
+        allowHeader("Authorization")    // Allows Authorization header (if you plan to use it)
+        anyHost()                       // Allows requests from any origin. This is often a temporary measure for development and should be restricted in production.
     }
 
     routing {
