@@ -39,7 +39,7 @@ fun Application.eventApi(ingestor: EventIngestor) {
         allowMethod(HttpMethod.Post)
         allowHeader("Content-Type")
         allowHeader("Authorization")
-        anyHost() // Consider restricting this in production
+        anyHost()
     }
     install(CallLogging) {
         level = Level.INFO
