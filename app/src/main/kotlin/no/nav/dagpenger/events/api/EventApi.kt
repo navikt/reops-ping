@@ -1,6 +1,7 @@
 package no.nav.dagpenger.events.api
 
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
@@ -9,7 +10,6 @@ import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.calllogging.CallLoggingConfig
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
-import io.ktor.http.HttpMethod
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.plugins.statuspages.StatusPagesConfig
 import io.ktor.server.request.path
