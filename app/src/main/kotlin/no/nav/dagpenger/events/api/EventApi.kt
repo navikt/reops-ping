@@ -26,6 +26,8 @@ import no.nav.dagpenger.events.ingestion.EventIngestor
 import org.slf4j.event.Level
 
 private val callLogger = KotlinLogging.logger("CallLogging")
+private val fnrRegex = Regex("\\b\\d{11}\\b")
+private const val REDACTED_TEXT = "[redacted-fnr]"
 
 fun Application.eventApi(ingestor: EventIngestor) {
     install(StatusPages) {
@@ -55,10 +57,15 @@ fun Application.eventApi(ingestor: EventIngestor) {
 
         post("/event") {
             val body = call.receiveText()
-            ingestor.handleEvent(body)
+            val redactedBody = redactFnr(body)
+            ingestor.handleEvent(redactedBody)
             call.respond(HttpStatusCode.Accepted)
         }
     }
+}
+
+private fun redactFnr(input: String): String {
+    return input.replace(fnrRegex, REDACTED_TEXT)
 }
 
 private fun StatusPagesConfig.statusPages() {
