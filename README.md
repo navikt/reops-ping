@@ -1,4 +1,4 @@
-# Reops ping test
+# Ping
 
 Ping med Kotlin på NAIS.
 

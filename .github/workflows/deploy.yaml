@@ -58,16 +58,16 @@ jobs:
     needs: [ build ]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: dev-gcp
+    environment: prod-gcp
     permissions:
       id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: nais/deploy/actions/deploy@v2
         env:
-          CLUSTER: dev-gcp
+          CLUSTER: prod-gcp
           RESOURCE: .nais/cnrm/dataset.yaml #,.nais/cnrm/permission.yaml
-          VAR: project=team-researchops-dev-4396,dataset=${{ env.dataset }}
+          VAR: project=team-researchops-prod-4396,dataset=${{ env.dataset }}
           PRINT_PAYLOAD: true
 
   deploy-views:
@@ -75,7 +75,7 @@ jobs:
     needs: [ deploy-dataset ]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: dev-gcp
+    environment: prod-gcp
     permissions:
       id-token: write
     strategy:
@@ -89,26 +89,26 @@ jobs:
           echo "EOF" >> "$GITHUB_ENV"
       - uses: nais/deploy/actions/deploy@v2
         env:
-          CLUSTER: dev-gcp
+          CLUSTER: prod-gcp
           RESOURCE: .nais/views/parquet-table.yaml
-          VAR: project=team-researchops-dev-4396,dataset=${{ env.dataset }},table=${{ matrix.table }},schema=${{ env.SCHEMA }}
-          VARS: .nais/vars-dev.yaml
+          VAR: project=team-researchops-prod-01d6,dataset=${{ env.dataset }},table=${{ matrix.table }},schema=${{ env.SCHEMA }}
+          VARS: .nais/vars-prod.yaml
           PRINT_PAYLOAD: true
 
-  deploy-dev:
-    name: Deploy to dev
+  deploy-prod:
+    name: Deploy to prod
     needs: [ build ]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: dev-gcp
+    environment: prod-gcp
     permissions:
       id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: nais/deploy/actions/deploy@v2
         env:
-          CLUSTER: dev-gcp
+          CLUSTER: prod-gcp
           RESOURCE: .nais/nais.yaml
-          VARS: .nais/vars-dev.yaml
+          VARS: .nais/vars-prod.yaml
           VAR: image=${{ needs.build.outputs.image }}
           PRINT_PAYLOAD: true

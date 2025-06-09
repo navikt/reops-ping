@@ -13,4 +13,4 @@ spec:
   role: roles/storage.objectViewer
   resourceRef:
     kind: StorageBucket
-    name: reops-events-bucket
+    name: ping

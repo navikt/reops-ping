@@ -1,7 +1,7 @@
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
-  name: "reops-events"
+  name: "ping"
   namespace: "team-researchops"
   labels:
     "team": "team-researchops"
@@ -25,8 +25,8 @@ spec:
       cpu: 10m
       memory: 256Mi
   ingresses:
-    - https://ping.intern.dev.nav.no/
-    - https://ping.ekstern.dev.nav.no/event
+    - https://ping.intern.nav.no/
+    - https://ping.nav.no/event
   env:
     - name: GCS_BATCH_SIZE
       value: "5000"
