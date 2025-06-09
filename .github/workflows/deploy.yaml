@@ -67,7 +67,7 @@ jobs:
         env:
           CLUSTER: prod-gcp
           RESOURCE: .nais/cnrm/dataset.yaml,.nais/cnrm/permission.yaml
-          VAR: project=team-researchops-prod-4396,dataset=${{ env.dataset }}
+          VAR: project=team-researchops-prod-01d6,dataset=${{ env.dataset }}
           PRINT_PAYLOAD: true
 
   deploy-views:
