@@ -8,7 +8,7 @@ on:
       - 'docs/**'
 
 env:
-  dataset: events
+  dataset: ping
 
 jobs:
   build:
