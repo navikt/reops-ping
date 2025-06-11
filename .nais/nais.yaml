@@ -1,7 +1,7 @@
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
-  name: "ping"
+  name: "reops-ping"
   namespace: "team-researchops"
   labels:
     "team": "team-researchops"
@@ -25,12 +25,13 @@ spec:
       cpu: 10m
       memory: 256Mi
   ingresses:
-    - https://ping1.intern.nav.no/
+    - https://ping.intern.nav.no/
+    - https://ping.nav.no/event
   env:
     - name: GCS_BATCH_SIZE
-      value: "5000"
+      value: "3000"
     - name: GCS_MAX_INTERVAL_SECONDS
-      value: "10"
+      value: "30"
     - name: GCS_BUCKET_PREFIX_EVENT
       value: "gs://{{ bucket.name }}/events"
     - name: GCS_BUCKET_PREFIX_ATTRIBUTE

@@ -13,7 +13,7 @@ spec:
   resourceID: "{{table}}"
   datasetRef:
     name: "{{dataset}}"
-  description: "{{table}} fra dp-event basert på Parquet-filer i GCS"
+  description: "{{table}} fra ping basert på Parquet-filer i GCS"
   externalDataConfiguration:
     sourceFormat: PARQUET
     sourceUris:

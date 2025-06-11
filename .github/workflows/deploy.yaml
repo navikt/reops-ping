@@ -7,9 +7,6 @@ on:
     paths-ignore:
       - 'docs/**'
 
-env:
-  dataset: ping
-
 jobs:
   build:
     name: Build and publish Docker image
@@ -52,48 +49,6 @@ jobs:
     outputs:
       image: ${{ steps.docker-build-push.outputs.image }}
       digest: ${{ steps.docker-build-push.outputs.digest }}
-
-  deploy-dataset:
-    name: Deploy BigQuery dataset
-    needs: [ build ]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment: prod-gcp
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: nais/deploy/actions/deploy@v2
-        env:
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/cnrm/dataset.yaml #,.nais/cnrm/permission.yaml
-          VAR: project=team-researchops-prod-01d6,dataset=${{ env.dataset }}
-          PRINT_PAYLOAD: true
-
-  deploy-views:
-    name: Deploy BigQuery views
-    needs: [ deploy-dataset ]
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment: prod-gcp
-    permissions:
-      id-token: write
-    strategy:
-      matrix:
-        table: [ events, events-attributes ]
-    steps:
-      - uses: actions/checkout@v4
-      - run: |
-          echo "SCHEMA<<EOF" >> "$GITHUB_ENV"
-          cat .nais/views/${{matrix.table}}.schema.yaml >> $GITHUB_ENV
-          echo "EOF" >> "$GITHUB_ENV"
-      - uses: nais/deploy/actions/deploy@v2
-        env:
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/views/parquet-table.yaml
-          VAR: project=team-researchops-prod-01d6,dataset=${{ env.dataset }},table=${{ matrix.table }},schema=${{ env.SCHEMA }}
-          VARS: .nais/vars-prod.yaml
-          PRINT_PAYLOAD: true
 
   deploy-prod:
     name: Deploy to prod
