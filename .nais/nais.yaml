@@ -39,7 +39,6 @@ spec:
   gcp:
     buckets:
       - name: "{{ bucket.name }}"
-        retentionPeriodDays: 3
         publicAccessPrevention: true
         lifecycleCondition:
           age: 3 # days
