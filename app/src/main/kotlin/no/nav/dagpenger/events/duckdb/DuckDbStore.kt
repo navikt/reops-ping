@@ -99,9 +99,25 @@ class DuckDbStore internal constructor(
                         stmt.setString(5, event.environment)
                         stmt.setString(6, event.eventName)
                         stmt.setString(7, event.json)
-                        stmt.setNull(8, java.sql.Types.VARCHAR) // url_host
-                        stmt.setNull(9, java.sql.Types.VARCHAR) // url_path
-                        stmt.setNull(10, java.sql.Types.VARCHAR) // url_query
+
+                        if (event.urlHost != null) {
+                            stmt.setString(8, event.urlHost)
+                        } else {
+                            stmt.setNull(8, java.sql.Types.VARCHAR)
+                        }
+
+                        if (event.urlPath != null) {
+                            stmt.setString(9, event.urlPath)
+                        } else {
+                            stmt.setNull(9, java.sql.Types.VARCHAR)
+                        }
+
+                        if (event.urlQuery != null) {
+                            stmt.setString(10, event.urlQuery)
+                        } else {
+                            stmt.setNull(10, java.sql.Types.VARCHAR)
+                        }
+
                         stmt.executeUpdate()
                     }
 

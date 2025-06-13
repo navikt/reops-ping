@@ -24,6 +24,9 @@ data class Event(
     val team: String,
     val app: String,
     val environment: String,
+    val urlHost: String? = null,
+    val urlPath: String? = null,
+    val urlQuery: String? = null,
 ) {
     val uuid: UUID = UuidCreator.getTimeOrderedEpoch()
     val createdAt: Instant = Instant.now()
@@ -46,9 +49,24 @@ data class Event(
                     parsed["environment"]?.jsonPrimitive?.contentOrNull
                         ?: throw IllegalArgumentException("Missing 'environment'")
 
+                // Extract optional URL fields
+                val urlHost = parsed["url_host"]?.jsonPrimitive?.contentOrNull
+                val urlPath = parsed["url_path"]?.jsonPrimitive?.contentOrNull
+                val urlQuery = parsed["url_query"]?.jsonPrimitive?.contentOrNull
+
                 val attributes = parsed["payload"]?.let { flatJsonToMap(it) } ?: emptyMap()
 
-                Event(eventName, attributes, json, team, app, environment)
+                Event(
+                    eventName,
+                    attributes,
+                    json,
+                    team,
+                    app,
+                    environment,
+                    urlHost,
+                    urlPath,
+                    urlQuery,
+                )
             } catch (e: Exception) {
                 throw IllegalArgumentException("Malformed JSON: ${e.message}")
             }
