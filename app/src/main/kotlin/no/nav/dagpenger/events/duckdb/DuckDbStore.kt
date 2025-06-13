@@ -54,7 +54,10 @@ class DuckDbStore internal constructor(
                     app         TEXT,
                     environment TEXT,
                     event_name  TEXT,
-                    payload     TEXT
+                    payload     TEXT,
+                    url_host    TEXT,
+                    url_path    TEXT,
+                    url_query   TEXT
                 );
                 
                 CREATE TABLE IF NOT EXISTS event_attribute
@@ -83,7 +86,7 @@ class DuckDbStore internal constructor(
             try {
                 conn
                     .prepareStatement(
-                        "INSERT INTO event (uuid, created_at, team, app, environment, event_name, payload) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        "INSERT INTO event (uuid, created_at, team, app, environment, event_name, payload, url_host, url_path, url_query) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     )
                     .use { stmt ->
                         stmt.setString(1, event.uuid.toString())
@@ -93,6 +96,9 @@ class DuckDbStore internal constructor(
                         stmt.setString(5, event.environment)
                         stmt.setString(6, event.eventName)
                         stmt.setString(7, event.json)
+                        stmt.setNull(8, java.sql.Types.VARCHAR) // url_host
+                        stmt.setNull(9, java.sql.Types.VARCHAR) // url_path
+                        stmt.setNull(10, java.sql.Types.VARCHAR) // url_query
                         stmt.executeUpdate()
                     }
 

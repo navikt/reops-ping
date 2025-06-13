@@ -13,3 +13,9 @@
   type: STRING
 - name: payload
   type: STRING
+- name: url_host
+  type: STRING
+- name: url_path
+  type: STRING
+- name: url_query
+  type: STRING
