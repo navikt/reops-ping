@@ -229,7 +229,7 @@ class DuckDbStore internal constructor(
     }
 
     private fun partitionPath(now: LocalDateTime = LocalDateTime.now()) =
-        "year=${now.year}/month=${now.month.value}/day=${now.dayOfMonth}/${UUID.randomUUID()}"
+        "${UUID.randomUUID()}"
 
     companion object {
         private val logger = KotlinLogging.logger { }
