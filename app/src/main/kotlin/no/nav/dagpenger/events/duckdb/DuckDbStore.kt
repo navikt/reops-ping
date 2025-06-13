@@ -228,8 +228,9 @@ class DuckDbStore internal constructor(
         storage.createFrom(blobInfo, localFile)
     }
 
-    private fun partitionPath(now: LocalDateTime = LocalDateTime.now()) =
-        "${UUID.randomUUID()}"
+    private fun partitionPath(now: LocalDateTime = LocalDateTime.now()): String {
+        return "${UUID.randomUUID()}"
+    }
 
     companion object {
         private val logger = KotlinLogging.logger { }
