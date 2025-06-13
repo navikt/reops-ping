@@ -86,7 +86,10 @@ class DuckDbStore internal constructor(
             try {
                 conn
                     .prepareStatement(
-                        "INSERT INTO event (uuid, created_at, team, app, environment, event_name, payload, url_host, url_path, url_query) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        """INSERT INTO event (
+                            uuid, created_at, team, app, environment, event_name, payload, 
+                            url_host, url_path, url_query
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     )
                     .use { stmt ->
                         stmt.setString(1, event.uuid.toString())
@@ -153,7 +156,10 @@ class DuckDbStore internal constructor(
                                 }
 
                                 else -> {
-                                    throw IllegalArgumentException("Unsupported attribute type: ${value::class.java}")
+                                    throw IllegalArgumentException(
+                                        "Unsupported attribute type: " +
+                                            "${value::class.java}",
+                                    )
                                 }
                             }
                             stmt.setTimestamp(8, Timestamp.from(event.createdAt))
