@@ -196,11 +196,33 @@ class DuckDbStore internal constructor(
         withContext(Dispatchers.IO) {
             mutex.withLock {
                 flushTable("event", gcsBucketEvent)
-                flushTable("event_attribute", gcsBucketAttribute)
+
+                // Only flush event_attribute table if it has records
+                if (tableHasRecords("event_attribute")) {
+                    flushTable("event_attribute", gcsBucketAttribute)
+                } else {
+                    logger.info { "Skipping event_attribute flush as table is empty" }
+                    // Still need to clear the table even if empty
+                    clearTable("event_attribute")
+                }
 
                 logger.info { "Flush finished" }
             }
         }
+
+    private fun tableHasRecords(table: String): Boolean {
+        return conn.createStatement().use { stmt ->
+            stmt.executeQuery("SELECT COUNT(*) FROM $table").use { rs ->
+                rs.next() && rs.getLong(1) > 0
+            }
+        }
+    }
+
+    private fun clearTable(table: String) {
+        conn.createStatement().use { stmt ->
+            stmt.executeUpdate("DELETE FROM $table")
+        }
+    }
 
     private fun flushTable(
         table: String,
