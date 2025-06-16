@@ -48,28 +48,28 @@ class DuckDbStore internal constructor(
                 """
                 CREATE TABLE IF NOT EXISTS event
                 (
-                    uuid        TEXT PRIMARY KEY,
-                    created_at  TIMESTAMP,
-                    team        TEXT,
-                    app         TEXT,
-                    environment TEXT,
-                    event_name  TEXT,
-                    payload     TEXT,
-                    url_host    TEXT,
-                    url_path    TEXT,
-                    url_query   TEXT
+                    hendelse_id        TEXT PRIMARY KEY,
+                    hendelse_tidspunkt TIMESTAMP,
+                    app_eier           TEXT,
+                    app_navn           TEXT,
+                    app_miljo          TEXT,
+                    hendelse_navn      TEXT,
+                    payload            TEXT,
+                    url_domene         TEXT,
+                    url_sti            TEXT,
+                    url_parametre      TEXT
                 );
                 
                 CREATE TABLE IF NOT EXISTS event_attribute
                 (
-                    uuid         TEXT,
-                    event_name   TEXT,
-                    key          TEXT,
-                    type         TEXT,
-                    value_string TEXT,
-                    value_bool   BOOLEAN,
-                    value_number DOUBLE,
-                    created_at   TIMESTAMP
+                    hendelse_id      TEXT,
+                    hendelse_navn    TEXT,
+                    key              TEXT,
+                    type             TEXT,
+                    value_string     TEXT,
+                    value_bool       BOOLEAN,
+                    value_number     DOUBLE,
+                    hendelse_tidspunkt TIMESTAMP
                 );
                 """.trimIndent(),
             )
@@ -87,33 +87,33 @@ class DuckDbStore internal constructor(
                 conn
                     .prepareStatement(
                         """INSERT INTO event (
-                            uuid, created_at, team, app, environment, event_name, payload, 
-                            url_host, url_path, url_query
+                            hendelse_id, hendelse_tidspunkt, app_eier, app_navn, app_miljo, hendelse_navn, payload, 
+                            url_domene, url_sti, url_parametre
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     )
                     .use { stmt ->
                         stmt.setString(1, event.uuid.toString())
                         stmt.setTimestamp(2, Timestamp.from(event.createdAt))
-                        stmt.setString(3, event.team)
-                        stmt.setString(4, event.app)
-                        stmt.setString(5, event.environment)
-                        stmt.setString(6, event.eventName)
+                        stmt.setString(3, event.appEier)
+                        stmt.setString(4, event.appNavn)
+                        stmt.setString(5, event.appMiljo)
+                        stmt.setString(6, event.hendelsesNavn)
                         stmt.setString(7, event.json)
 
-                        if (event.urlHost != null) {
-                            stmt.setString(8, event.urlHost)
+                        if (event.urlDomene != null) {
+                            stmt.setString(8, event.urlDomene)
                         } else {
                             stmt.setNull(8, java.sql.Types.VARCHAR)
                         }
 
-                        if (event.urlPath != null) {
-                            stmt.setString(9, event.urlPath)
+                        if (event.urlSti != null) {
+                            stmt.setString(9, event.urlSti)
                         } else {
                             stmt.setNull(9, java.sql.Types.VARCHAR)
                         }
 
-                        if (event.urlQuery != null) {
-                            stmt.setString(10, event.urlQuery)
+                        if (event.urlParametre != null) {
+                            stmt.setString(10, event.urlParametre)
                         } else {
                             stmt.setNull(10, java.sql.Types.VARCHAR)
                         }
@@ -127,20 +127,20 @@ class DuckDbStore internal constructor(
                             //language=PostgreSQL
                             """
                             INSERT INTO event_attribute (
-                                uuid, 
-                                event_name, 
+                                hendelse_id, 
+                                hendelse_navn, 
                                 key, 
                                 type, 
                                 value_string, 
                                 value_bool, 
                                 value_number, 
-                                created_at
+                                hendelse_tidspunkt
                             )
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                             """.trimIndent(),
                         ).use { stmt ->
                             stmt.setString(1, event.uuid.toString())
-                            stmt.setString(2, event.eventName)
+                            stmt.setString(2, event.hendelsesNavn)
                             stmt.setString(3, key)
                             when (value) {
                                 is String -> {

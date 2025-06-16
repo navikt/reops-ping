@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 internal class EventIngestorTest {
     @Test
     fun `skal lagre event for gyldig JSON med event_name `() {
-        val json = """{"event_name": "test_event"}"""
+        val json = """{"hendelse_navn": "test_event", "app_eier": "team", "app_navn": "app", "app_miljo": "env"}"""
         val ingestor = TestEventIngestor()
 
         runBlocking { ingestor.handleEvent(json) }
@@ -28,13 +28,13 @@ internal class EventIngestorTest {
             shouldThrow<IllegalArgumentException> {
                 runBlocking { ingestor.handleEvent(json) }
             }
-        exception.message shouldContain "Missing 'event_name'"
+        exception.message shouldContain "Missing 'hendelse_navn'"
     }
 
     @Test
     fun `skal kaste exception når event_name er tom`() {
         // Arrange
-        val json = """{"event_name": ""}"""
+        val json = """{"hendelse_navn": "", "app_eier": "team", "app_navn": "app", "app_miljo": "env"}"""
         val ingestor = TestEventIngestor()
 
         // Act & Assert
@@ -42,7 +42,7 @@ internal class EventIngestorTest {
             shouldThrow<IllegalArgumentException> {
                 runBlocking { ingestor.handleEvent(json) }
             }
-        exception.message shouldContain "Missing 'event_name'"
+        exception.message shouldContain "Missing 'hendelse_navn'"
     }
 
     @Test
@@ -63,7 +63,7 @@ internal class EventIngestorTest {
         val storedEvents = mutableListOf<Pair<String, String>>()
 
         override suspend fun storeEvent(event: Event) {
-            storedEvents.add(event.eventName to event.json)
+            storedEvents.add(event.hendelsesNavn to event.json)
         }
     }
 }

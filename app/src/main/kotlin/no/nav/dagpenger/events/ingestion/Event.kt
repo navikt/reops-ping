@@ -18,15 +18,15 @@ import java.time.Instant
 import java.util.UUID
 
 data class Event(
-    val eventName: String,
+    val hendelsesNavn: String,
     val attributes: Map<String, Any>,
     val json: String,
-    val team: String,
-    val app: String,
-    val environment: String,
-    val urlHost: String? = null,
-    val urlPath: String? = null,
-    val urlQuery: String? = null,
+    val appEier: String,
+    val appNavn: String,
+    val appMiljo: String,
+    val urlDomene: String? = null,
+    val urlSti: String? = null,
+    val urlParametre: String? = null,
 ) {
     val uuid: UUID = UuidCreator.getTimeOrderedEpoch()
     val createdAt: Instant = Instant.now()
@@ -36,36 +36,75 @@ data class Event(
             try {
                 val parsed = Json.parseToJsonElement(json).jsonObject
 
-                val eventName = parsed["event_name"]?.jsonPrimitive?.contentOrNull
-                if (eventName.isNullOrBlank()) throw IllegalArgumentException("Missing 'event_name'")
+                val hendelsesNavn =
+                    parsed["hendelse_navn"]
+                        ?.jsonPrimitive
+                        ?.contentOrNull
+                        ?: parsed["event_name"]
+                            ?.jsonPrimitive
+                            ?.contentOrNull
+                if (hendelsesNavn.isNullOrBlank()) throw IllegalArgumentException("Missing 'hendelse_navn'")
 
-                val team =
-                    parsed["team"]?.jsonPrimitive?.contentOrNull
-                        ?: throw IllegalArgumentException("Missing 'team'")
-                val app =
-                    parsed["app"]?.jsonPrimitive?.contentOrNull
-                        ?: throw IllegalArgumentException("Missing 'app'")
-                val environment =
-                    parsed["environment"]?.jsonPrimitive?.contentOrNull
-                        ?: throw IllegalArgumentException("Missing 'environment'")
+                val appEier =
+                    parsed["app_eier"]
+                        ?.jsonPrimitive
+                        ?.contentOrNull
+                        ?: parsed["team"]
+                            ?.jsonPrimitive
+                            ?.contentOrNull
+                        ?: throw IllegalArgumentException("Missing 'app_eier'")
+                val appNavn =
+                    parsed["app_navn"]
+                        ?.jsonPrimitive
+                        ?.contentOrNull
+                        ?: parsed["app"]
+                            ?.jsonPrimitive
+                            ?.contentOrNull
+                        ?: throw IllegalArgumentException("Missing 'app_navn'")
+                val appMiljo =
+                    parsed["app_miljo"]
+                        ?.jsonPrimitive
+                        ?.contentOrNull
+                        ?: parsed["environment"]
+                            ?.jsonPrimitive
+                            ?.contentOrNull
+                        ?: throw IllegalArgumentException("Missing 'app_miljo'")
 
                 // Extract optional URL fields
-                val urlHost = parsed["url_host"]?.jsonPrimitive?.contentOrNull
-                val urlPath = parsed["url_path"]?.jsonPrimitive?.contentOrNull
-                val urlQuery = parsed["url_query"]?.jsonPrimitive?.contentOrNull
+                val urlDomene =
+                    parsed["url_domene"]
+                        ?.jsonPrimitive
+                        ?.contentOrNull
+                        ?: parsed["url_host"]
+                            ?.jsonPrimitive
+                            ?.contentOrNull
+                val urlSti =
+                    parsed["url_sti"]
+                        ?.jsonPrimitive
+                        ?.contentOrNull
+                        ?: parsed["url_path"]
+                            ?.jsonPrimitive
+                            ?.contentOrNull
+                val urlParametre =
+                    parsed["url_parametre"]
+                        ?.jsonPrimitive
+                        ?.contentOrNull
+                        ?: parsed["url_query"]
+                            ?.jsonPrimitive
+                            ?.contentOrNull
 
                 val attributes = parsed["payload"]?.let { flatJsonToMap(it) } ?: emptyMap()
 
                 Event(
-                    eventName,
+                    hendelsesNavn,
                     attributes,
                     json,
-                    team,
-                    app,
-                    environment,
-                    urlHost,
-                    urlPath,
-                    urlQuery,
+                    appEier,
+                    appNavn,
+                    appMiljo,
+                    urlDomene,
+                    urlSti,
+                    urlParametre,
                 )
             } catch (e: Exception) {
                 throw IllegalArgumentException("Malformed JSON: ${e.message}")

@@ -31,7 +31,7 @@ class DuckDbStoreTest {
                 "boolean" to true,
                 "number" to 42.0,
             )
-        val event = Event(eventName, attributes, payload)
+        val event = Event(eventName, attributes, payload, "team", "app", "env")
 
         runBlocking { duckDbStore.insertEvent(event) }
 
@@ -40,8 +40,11 @@ class DuckDbStoreTest {
             while (rs.next()) {
                 rs.getString(1) shouldBe event.uuid.toString()
                 rs.getTimestamp(2) shouldBe Timestamp.from(event.createdAt)
-                rs.getString(3) shouldBe event.eventName
-                rs.getString(4) shouldBe event.json
+                rs.getString(3) shouldBe event.appEier
+                rs.getString(4) shouldBe event.appNavn
+                rs.getString(5) shouldBe event.appMiljo
+                rs.getString(6) shouldBe event.hendelsesNavn
+                rs.getString(7) shouldBe event.json
             }
         }
 

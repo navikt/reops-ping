@@ -23,7 +23,12 @@ class EventApiTest {
             }
 
             @Language("JSON")
-            val eventJson = """{"event_name": "bar", "payload": {"some-data": "/"}}"""
+            val eventJson =
+                """
+                {"hendelse_navn": "bar", "app_eier": "team", "app_navn": "app", 
+                "app_miljo": "env", "payload": {"some-data": "/"}}
+                """.trimIndent().replace("\n", "")
+
             val response =
                 client.post("/event") {
                     contentType(ContentType.Application.Json)
@@ -46,7 +51,12 @@ class EventApiTest {
             }
 
             @Language("JSON")
-            val eventJson = """{"event_name": "bar", "payload": {"some-data": "/"}}"""
+            val eventJson =
+                """
+                {"hendelse_navn": "bar", "app_eier": "team", "app_navn": "app", 
+                "app_miljo": "env", "payload": {"some-data": "/"}}
+                """.trimIndent().replace("\n", "")
+
             val response =
                 client.post("/event") {
                     contentType(ContentType.Application.Json)
