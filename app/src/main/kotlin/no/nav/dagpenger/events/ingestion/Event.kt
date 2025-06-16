@@ -15,6 +15,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import kotlinx.serialization.json.longOrNull
 import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.UUID
 
 data class Event(
@@ -29,9 +31,11 @@ data class Event(
     val urlParametre: String? = null,
 ) {
     val uuid: UUID = UuidCreator.getTimeOrderedEpoch()
-    val createdAt: Instant = Instant.now()
+    val createdAt: Instant = ZonedDateTime.now(OSLO_ZONE).toInstant()
 
     companion object {
+        private val OSLO_ZONE = ZoneId.of("Europe/Oslo")
+
         fun fraJson(json: String): Event =
             try {
                 val parsed = Json.parseToJsonElement(json).jsonObject

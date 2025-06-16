@@ -16,6 +16,9 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.Timestamp
 import java.time.LocalDateTime
+import java.time.ZoneId
+import java.util.Calendar
+import java.util.TimeZone
 import java.util.UUID
 
 fun interface DuckDbObserver {
@@ -40,6 +43,8 @@ class DuckDbStore internal constructor(
 
     private val observers = mutableListOf<DuckDbObserver>()
     private val mutex = Mutex()
+    private val osloZone = ZoneId.of("Europe/Oslo")
+    private val osloCalendar = Calendar.getInstance(TimeZone.getTimeZone(osloZone))
 
     init {
         conn.createStatement().use {
@@ -92,7 +97,9 @@ class DuckDbStore internal constructor(
                     )
                     .use { stmt ->
                         stmt.setString(1, event.uuid.toString())
-                        stmt.setTimestamp(2, Timestamp.from(event.createdAt))
+                        val timestamp = Timestamp.from(event.createdAt)
+                        stmt.setTimestamp(2, timestamp, osloCalendar)
+
                         stmt.setString(3, event.appEier)
                         stmt.setString(4, event.appNavn)
                         stmt.setString(5, event.appMiljo)
@@ -176,7 +183,7 @@ class DuckDbStore internal constructor(
                                     )
                                 }
                             }
-                            stmt.setTimestamp(8, Timestamp.from(event.createdAt))
+                            stmt.setTimestamp(8, Timestamp.from(event.createdAt), osloCalendar)
                             stmt.executeUpdate()
                         }
                 }
