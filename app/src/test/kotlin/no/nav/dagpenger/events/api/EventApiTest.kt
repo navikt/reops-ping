@@ -26,7 +26,7 @@ class EventApiTest {
             val eventJson =
                 """
                 {"hendelse_navn": "bar", "app_eier": "team", "app_navn": "app", 
-                "app_miljo": "env", "payload": {"some-data": "/"}}
+                "app_miljo": "env", "some-data": "/"}
                 """.trimIndent().replace("\n", "")
 
             val response =
@@ -54,7 +54,7 @@ class EventApiTest {
             val eventJson =
                 """
                 {"hendelse_navn": "bar", "app_eier": "team", "app_navn": "app", 
-                "app_miljo": "env", "payload": {"some-data": "/"}}
+                "app_miljo": "env", "some-data": "/"}
                 """.trimIndent().replace("\n", "")
 
             val response =

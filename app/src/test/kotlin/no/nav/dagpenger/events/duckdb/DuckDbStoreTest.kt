@@ -23,15 +23,14 @@ class DuckDbStoreTest {
     @Test
     fun `insertEvent should insert event into database`() {
         val eventName = "some_event"
-        val payload = "{\"key\": \"value\"}"
-
         val attributes =
             mapOf(
                 "string" to "value",
                 "boolean" to true,
                 "number" to 42.0,
             )
-        val event = Event(eventName, attributes, payload, "team", "app", "env")
+        val json = """{"hendelse_navn": "$eventName", "app_eier": "team", "app_navn": "app", "app_miljo": "env", "string": "value"}"""
+        val event = Event(eventName, attributes, json, "team", "app", "env")
 
         runBlocking { duckDbStore.insertEvent(event) }
 
@@ -44,7 +43,6 @@ class DuckDbStoreTest {
                 rs.getString(4) shouldBe event.appNavn
                 rs.getString(5) shouldBe event.appMiljo
                 rs.getString(6) shouldBe event.hendelsesNavn
-                rs.getString(7) shouldBe event.json
             }
         }
 

@@ -54,7 +54,6 @@ class DuckDbStore internal constructor(
                     app_navn           TEXT,
                     app_miljo          TEXT,
                     hendelse_navn      TEXT,
-                    payload            TEXT,
                     url_domene         TEXT,
                     url_sti            TEXT,
                     url_parametre      TEXT
@@ -87,9 +86,9 @@ class DuckDbStore internal constructor(
                 conn
                     .prepareStatement(
                         """INSERT INTO event (
-                            hendelse_id, hendelse_tidspunkt, app_eier, app_navn, app_miljo, hendelse_navn, payload, 
+                            hendelse_id, hendelse_tidspunkt, app_eier, app_navn, app_miljo, hendelse_navn, 
                             url_domene, url_sti, url_parametre
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     )
                     .use { stmt ->
                         stmt.setString(1, event.uuid.toString())
@@ -98,24 +97,23 @@ class DuckDbStore internal constructor(
                         stmt.setString(4, event.appNavn)
                         stmt.setString(5, event.appMiljo)
                         stmt.setString(6, event.hendelsesNavn)
-                        stmt.setString(7, event.json)
 
                         if (event.urlDomene != null) {
-                            stmt.setString(8, event.urlDomene)
+                            stmt.setString(7, event.urlDomene)
+                        } else {
+                            stmt.setNull(7, java.sql.Types.VARCHAR)
+                        }
+
+                        if (event.urlSti != null) {
+                            stmt.setString(8, event.urlSti)
                         } else {
                             stmt.setNull(8, java.sql.Types.VARCHAR)
                         }
 
-                        if (event.urlSti != null) {
-                            stmt.setString(9, event.urlSti)
+                        if (event.urlParametre != null) {
+                            stmt.setString(9, event.urlParametre)
                         } else {
                             stmt.setNull(9, java.sql.Types.VARCHAR)
-                        }
-
-                        if (event.urlParametre != null) {
-                            stmt.setString(10, event.urlParametre)
-                        } else {
-                            stmt.setNull(10, java.sql.Types.VARCHAR)
                         }
 
                         stmt.executeUpdate()

@@ -93,7 +93,8 @@ data class Event(
                             ?.jsonPrimitive
                             ?.contentOrNull
 
-                val attributes = parsed["payload"]?.let { flatJsonToMap(it) } ?: emptyMap()
+                // Get attributes directly from the JSON object, not from a nested "payload" field
+                val attributes = flatJsonToMap(parsed)
 
                 Event(
                     hendelsesNavn,
@@ -113,20 +114,35 @@ data class Event(
         private fun flatJsonToMap(json: JsonElement): Map<String, Any> {
             require(json is JsonObject) { "JSON må være et objekt på toppnivå." }
 
-            return json.mapValues { (_, value) ->
-                when (value) {
-                    is JsonPrimitive ->
-                        when {
-                            value.isString -> value.content
-                            value.booleanOrNull != null -> value.boolean
-                            value.longOrNull != null -> value.long
-                            value.doubleOrNull != null -> value.double
-                            else -> value.content // fallback
-                        }
+            // Filter out the fields we've already processed
+            val reservedFields =
+                setOf(
+                    "hendelse_navn", "event_name",
+                    "app_eier", "team",
+                    "app_navn", "app",
+                    "app_miljo", "environment",
+                    "url_domene", "url_host",
+                    "url_sti", "url_path",
+                    "url_parametre", "url_query",
+                )
 
-                    else -> value.toString() // serialiser arrays/objects som string
+            return json.entries
+                .filter { (key, _) -> key !in reservedFields }
+                .associate { (key, value) ->
+                    key to
+                        when (value) {
+                            is JsonPrimitive -> {
+                                when {
+                                    value.isString -> value.content
+                                    value.booleanOrNull != null -> value.boolean
+                                    value.longOrNull != null -> value.long
+                                    value.doubleOrNull != null -> value.double
+                                    else -> value.content // fallback
+                                }
+                            }
+                            else -> value.toString() // serialize arrays/objects as string
+                        }
                 }
-            }
         }
     }
 }
