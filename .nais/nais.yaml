@@ -14,7 +14,7 @@ spec:
     path: "internal/isready"
   replicas:
     min: 2
-    max: 2
+    max: 6
   prometheus:
     enabled: false
     path: "/internal/metrics"
@@ -22,7 +22,7 @@ spec:
     limits:
       memory: 512Mi
     requests:
-      cpu: 10m
+      cpu: 200m
       memory: 256Mi
   ingresses:
     - https://ping.intern.nav.no/
