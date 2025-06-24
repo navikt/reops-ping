@@ -209,8 +209,23 @@ class DuckDbStore internal constructor(
         }
 
     private fun tableHasRecords(table: String): Boolean {
+        if (table != "event_attribute") {
+            return conn.createStatement().use { stmt ->
+                stmt.executeQuery("SELECT COUNT(*) FROM $table").use { rs ->
+                    rs.next() && rs.getLong(1) > 0
+                }
+            }
+        }
+
+        // Special handling for event_attribute table
         return conn.createStatement().use { stmt ->
-            stmt.executeQuery("SELECT COUNT(*) FROM $table").use { rs ->
+            // Check if there are any records that are not empty payloads
+            stmt.executeQuery(
+                """
+                SELECT COUNT(*) FROM event_attribute
+                WHERE NOT (key = 'payload' AND type = 'string' AND value_string = '{}')
+            """,
+            ).use { rs ->
                 rs.next() && rs.getLong(1) > 0
             }
         }
