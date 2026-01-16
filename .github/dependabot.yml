@@ -8,9 +8,14 @@ updates:
 
   # Maintain dependencies for gradle
   - package-ecosystem: "gradle"
-    directory: "/"
+    directory: "/app"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+
+  - package-ecosystem: "gradle"
+    directory: "/build-logic"
+    schedule:
+      interval: "weekly"
 
   # Maintain dependencies for docker
   - package-ecosystem: "docker"
