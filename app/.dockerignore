@@ -3,3 +3,7 @@
 
 # Except installation directory
 !build/install
+
+# Allow built application jar
+!build/libs/
+!build/libs/*.jar

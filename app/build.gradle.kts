@@ -27,3 +27,7 @@ application {
     // Define the main class for the application.
     mainClass = "no.nav.dagpenger.events.AppKt"
 }
+
+tasks.jar {
+    archiveFileName.set("app.jar")
+}
