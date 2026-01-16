@@ -42,7 +42,7 @@ class PeriodicTriggerTest {
         trigger.onInsert()
 
         // Vent på at intervallet skal utløpe
-        ventPåAntallBatcher({ antallBatcher }, 1, timeout = 1000.milliseconds)
+        ventPåAntallBatcher({ antallBatcher }, 1, timeout = 100.milliseconds)
 
         // Skal bare trigge på første interval
         antallBatcher shouldBe 1
