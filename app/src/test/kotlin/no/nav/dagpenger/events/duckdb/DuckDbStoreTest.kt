@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import java.sql.DriverManager
 import java.sql.Timestamp
+import java.time.temporal.ChronoUnit
 
 class DuckDbStoreTest {
     private val connection = DriverManager.getConnection("jdbc:duckdb:")
@@ -38,7 +39,10 @@ class DuckDbStoreTest {
             val rs = it.executeQuery()
             while (rs.next()) {
                 rs.getString(1) shouldBe event.uuid.toString()
-                rs.getTimestamp(2) shouldBe Timestamp.from(event.createdAt)
+
+                val expectedCreatedAt = event.createdAt.truncatedTo(ChronoUnit.MICROS)
+                rs.getTimestamp(2) shouldBe Timestamp.from(expectedCreatedAt)
+
                 rs.getString(3) shouldBe event.appEier
                 rs.getString(4) shouldBe event.appNavn
                 rs.getString(5) shouldBe event.appMiljo
