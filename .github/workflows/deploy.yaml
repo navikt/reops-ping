@@ -30,7 +30,7 @@ jobs:
         with:
           dependency-graph: generate-and-submit
           cache-encryption-key: ${{ secrets.GradleEncryptionKey }}
-      - run: ./gradlew clean build
+      - run: ./gradlew :app:clean :app:build
 
       - name: Publish results (unit test)
         uses: EnricoMi/publish-unit-test-result-action@v2
