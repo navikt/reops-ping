@@ -10,7 +10,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.kotlin.logging)
-    implementation("ch.qos.logback:logback-classic:1.5.25")
+    implementation("ch.qos.logback:logback-classic:1.5.26")
     implementation("net.logstash.logback:logstash-logback-encoder:9.0") // For LogstashEncoder
 
     implementation("com.github.f4b6a3:uuid-creator:6.1.1")
