@@ -1,7 +1,17 @@
 version: 2
 updates:
   - package-ecosystem: "gradle"
-    directory: "/"
+    directory: "/app"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+    rebase-strategy: "auto"
+    groups:
+      all:
+        patterns:
+          - "*"
+  - package-ecosystem: "gradle"
+    directory: "/build-logic"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 5
@@ -21,7 +31,7 @@ updates:
         patterns:
           - "*"
   - package-ecosystem: "docker"
-    directory: "/"
+    directory: "app/"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 2
