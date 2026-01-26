@@ -1,30 +1,32 @@
 version: 2
 updates:
-  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+    rebase-strategy: "auto"
+    groups:
+      all:
+        patterns:
+          - "*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "daily"
-
-  # Maintain dependencies for gradle
-  - package-ecosystem: "gradle"
-    directory: "/app"
-    schedule:
-      interval: "weekly"
-
-  - package-ecosystem: "gradle"
-    directory: "/build-logic"
-    schedule:
-      interval: "weekly"
-
-  # Maintain dependencies for docker
+    open-pull-requests-limit: 5
+    rebase-strategy: "auto"
+    groups:
+      all:
+        patterns:
+          - "*"
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "daily"
-
-  # Maintain dependencies for npm
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "daily"
+    open-pull-requests-limit: 2
+    rebase-strategy: "auto"
+    groups:
+      all:
+        patterns:
+          - "*"
