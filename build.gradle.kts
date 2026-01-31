@@ -1,7 +1,7 @@
 plugins {
     application
-    id("org.jetbrains.kotlin.jvm") version "2.2.21"
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.21"
+    id("org.jetbrains.kotlin.jvm") version "2.3.0"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.0"
 }
 
 repositories {
@@ -14,7 +14,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(platform("io.ktor:ktor-bom:3.0.3"))
+    implementation(platform("io.ktor:ktor-bom:3.4.0"))
     implementation("io.ktor:ktor-server-core")
     implementation("io.ktor:ktor-server-netty")
     implementation("io.ktor:ktor-server-content-negotiation")
@@ -24,23 +24,23 @@ dependencies {
     implementation("io.ktor:ktor-server-call-logging")
     implementation("io.ktor:ktor-server-status-pages")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
 
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
-    implementation("ch.qos.logback:logback-classic:1.5.26")
+    implementation("ch.qos.logback:logback-classic:1.5.27")
     implementation("net.logstash.logback:logstash-logback-encoder:9.0")
 
     implementation("com.github.f4b6a3:uuid-creator:6.1.1")
-    implementation("com.google.cloud:google-cloud-storage:2.48.1")
-    implementation("org.duckdb:duckdb_jdbc:1.1.3")
+    implementation("com.google.cloud:google-cloud-storage:2.62.1")
+    implementation("org.duckdb:duckdb_jdbc:1.4.4.0")
 
     // Override vulnerable transitive dependencies
-    implementation("com.google.protobuf:protobuf-java:3.25.5")
+    implementation("com.google.protobuf:protobuf-java:4.33.5")
 
     testImplementation(kotlin("test"))
-    testImplementation("io.kotest:kotest-assertions-core:5.7.2")
+    testImplementation("io.kotest:kotest-assertions-core:6.1.2")
     testImplementation("io.ktor:ktor-server-test-host")
-    testImplementation("io.mockk:mockk:1.13.12")
+    testImplementation("io.mockk:mockk:1.14.9")
 }
 
 application {
