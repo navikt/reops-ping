@@ -5,17 +5,17 @@ on:
     branches:
       - main
     paths-ignore:
-      - 'docs/**'
+      - docs/**
 
 jobs:
   build:
     name: Build and publish Docker image
     runs-on: ubuntu-latest
     permissions:
-      contents: "write" # For å submitte dependency graph
-      checks: "write"
-      pull-requests: "write"
-      id-token: "write"
+      contents: write
+      checks: write
+      pull-requests: write
+      id-token: write
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-java@v5
@@ -25,12 +25,12 @@ jobs:
       - uses: gradle/actions/wrapper-validation@v5
       - uses: gradle/actions/setup-gradle@v5
         env:
-          # Eksluder test dependencies
           DEPENDENCY_GRAPH_INCLUDE_CONFIGURATIONS: compileClasspath|runtimeClasspath
         with:
           dependency-graph: generate-and-submit
           cache-encryption-key: ${{ secrets.GradleEncryptionKey }}
-      - run: ./gradlew installDist #--configuration-cache build
+
+      - run: ./gradlew installDist
 
       - name: Publish results (unit test)
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -43,16 +43,16 @@ jobs:
         id: docker-build-push
         with:
           team: team-researchops
-          tag: ${{ github.sha }}
-          dockerfile: app/Dockerfile
-          docker_context: app
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
     outputs:
       image: ${{ steps.docker-build-push.outputs.image }}
       digest: ${{ steps.docker-build-push.outputs.digest }}
 
   deploy-prod:
     name: Deploy to prod
-    needs: [ build ]
+    needs:
+      - build
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: prod-gcp

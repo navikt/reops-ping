@@ -1,0 +1,40 @@
+package no.nav.reops.events
+
+import io.ktor.server.cio.CIO
+import io.ktor.server.engine.embeddedServer
+import mu.KotlinLogging
+import no.nav.reops.events.api.eventApi
+import no.nav.reops.events.duckdb.DuckDbEventIngestor
+import no.nav.reops.events.duckdb.DuckDbStore
+import no.nav.reops.events.duckdb.PeriodicTrigger
+import kotlin.time.Duration.Companion.seconds
+
+private val logger = KotlinLogging.logger {}
+
+fun main() {
+    val batchSize = System.getenv("GCS_BATCH_SIZE")?.toIntOrNull() ?: 1000
+    val maxInterval = System.getenv("GCS_MAX_INTERVAL_SECONDS")?.toIntOrNull() ?: 10
+    val gcsBucketPrefixEvent =
+        System.getenv("GCS_BUCKET_PREFIX_EVENT")
+            ?: throw IllegalArgumentException("Environment variable GCS_BUCKET_PREFIX_EVENT is not set")
+    val gcsBucketPrefixAttribute =
+        System.getenv("GCS_BUCKET_PREFIX_ATTRIBUTE")
+            ?: throw IllegalArgumentException("Environment variable GCS_BUCKET_PREFIX_ATTRIBUTE is not set")
+
+    val store =
+        DuckDbStore(gcsBucketPrefixEvent, gcsBucketPrefixAttribute).also { store ->
+            PeriodicTrigger(batchSize, maxInterval.seconds) { store.flushToParquetAndClear() }
+                .apply {
+                    store.addObserver(this)
+                    registerShutdownHook()
+                }.start()
+        }
+    val ingestor = DuckDbEventIngestor(store)
+
+    embeddedServer(CIO, port = 8080) {
+        eventApi(ingestor)
+    }.apply {
+        logger.info { "Starting server" }
+        start(wait = true)
+    }
+}
