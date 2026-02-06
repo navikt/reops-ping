@@ -1,7 +1,7 @@
 plugins {
     application
-    id("org.jetbrains.kotlin.jvm") version "2.3.0"
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.0"
+    id("org.jetbrains.kotlin.jvm") version "2.3.10"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.10"
 }
 
 repositories {
@@ -38,7 +38,7 @@ dependencies {
     implementation("com.google.protobuf:protobuf-java:4.33.5")
 
     testImplementation(kotlin("test"))
-    testImplementation("io.kotest:kotest-assertions-core:6.1.2")
+    testImplementation("io.kotest:kotest-assertions-core:6.1.3")
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("io.mockk:mockk:1.14.9")
 }
