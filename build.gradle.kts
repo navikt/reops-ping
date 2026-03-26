@@ -31,14 +31,14 @@ dependencies {
     implementation("net.logstash.logback:logstash-logback-encoder:9.0")
 
     implementation("com.github.f4b6a3:uuid-creator:6.1.1")
-    implementation("com.google.cloud:google-cloud-storage:2.64.0")
+    implementation("com.google.cloud:google-cloud-storage:2.64.1")
     implementation("org.duckdb:duckdb_jdbc:1.5.1.0")
 
     // Override vulnerable transitive dependencies
     implementation("com.google.protobuf:protobuf-java:4.34.1")
 
     testImplementation(kotlin("test"))
-    testImplementation("io.kotest:kotest-assertions-core:6.1.7")
+    testImplementation("io.kotest:kotest-assertions-core:6.1.9")
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("io.mockk:mockk:1.14.9")
 }
