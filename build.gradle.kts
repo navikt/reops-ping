@@ -14,7 +14,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(platform("io.ktor:ktor-bom:3.4.1"))
+    implementation(platform("io.ktor:ktor-bom:3.4.2"))
     implementation("io.ktor:ktor-server-core")
     implementation("io.ktor:ktor-server-netty")
     implementation("io.ktor:ktor-server-content-negotiation")
