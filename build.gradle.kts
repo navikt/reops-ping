@@ -38,7 +38,7 @@ dependencies {
     implementation("com.google.protobuf:protobuf-java:4.34.1")
 
     testImplementation(kotlin("test"))
-    testImplementation("io.kotest:kotest-assertions-core:6.1.10")
+    testImplementation("io.kotest:kotest-assertions-core:6.1.11")
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("io.mockk:mockk:1.14.9")
 }
