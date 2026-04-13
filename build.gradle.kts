@@ -31,7 +31,7 @@ dependencies {
     implementation("net.logstash.logback:logstash-logback-encoder:9.0")
 
     implementation("com.github.f4b6a3:uuid-creator:6.1.1")
-    implementation("com.google.cloud:google-cloud-storage:2.64.1")
+    implementation("com.google.cloud:google-cloud-storage:2.66.0")
     implementation("org.duckdb:duckdb_jdbc:1.5.1.0")
 
     // Override vulnerable transitive dependencies
