@@ -32,7 +32,7 @@ dependencies {
 
     implementation("com.github.f4b6a3:uuid-creator:6.1.1")
     implementation("com.google.cloud:google-cloud-storage:2.68.0")
-    implementation("org.duckdb:duckdb_jdbc:1.5.2.1")
+    implementation("org.duckdb:duckdb_jdbc:1.5.3.0")
 
     // Override vulnerable transitive dependencies
     implementation("com.google.protobuf:protobuf-java:4.35.0")
