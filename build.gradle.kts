@@ -1,7 +1,7 @@
 plugins {
     application
-    id("org.jetbrains.kotlin.jvm") version "2.3.21"
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.21"
+    id("org.jetbrains.kotlin.jvm") version "2.4.0"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.4.0"
 }
 
 repositories {
@@ -27,7 +27,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
-    implementation("ch.qos.logback:logback-classic:1.5.33")
+    implementation("ch.qos.logback:logback-classic:1.5.34")
     implementation("net.logstash.logback:logstash-logback-encoder:9.0")
 
     implementation("com.github.f4b6a3:uuid-creator:6.1.1")
