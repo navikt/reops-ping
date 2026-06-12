@@ -35,7 +35,7 @@ dependencies {
     implementation("org.duckdb:duckdb_jdbc:1.5.3.0")
 
     // Override vulnerable transitive dependencies
-    implementation("com.google.protobuf:protobuf-java:4.35.0")
+    implementation("com.google.protobuf:protobuf-java:4.35.1")
 
     testImplementation(kotlin("test"))
     testImplementation("io.kotest:kotest-assertions-core:6.1.11")
